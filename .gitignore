@@ -57,6 +57,9 @@ ios/Flutter/flutter_export_environment.sh
 # ETL output (generated packs — hosted on CDN)
 /scripts/etl/output/
 
+# Editions clone (large, fetched by ETL)
+/scripts/etl/editions/
+
 # Python virtual env
 __pycache__/
 *.pyc
