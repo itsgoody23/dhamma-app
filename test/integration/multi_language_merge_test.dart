@@ -76,7 +76,8 @@ void main() {
       await mainDb.mergePackDatabase(pliPath);
 
       final rows = await mainDb
-          .customSelect("SELECT uid, language, title FROM texts WHERE uid = 'mn1'")
+          .customSelect(
+              "SELECT uid, language, title FROM texts WHERE uid = 'mn1'")
           .get();
       expect(rows.length, 2);
 
@@ -181,8 +182,8 @@ void main() {
 
       await mainDb.mergePackDatabase(enPath);
       await mainDb.mergePackDatabase(pliPath);
-      await mainDb
-          .customStatement("INSERT INTO texts_fts(texts_fts) VALUES('rebuild')");
+      await mainDb.customStatement(
+          "INSERT INTO texts_fts(texts_fts) VALUES('rebuild')");
 
       // Search English
       final enResults = await mainDb

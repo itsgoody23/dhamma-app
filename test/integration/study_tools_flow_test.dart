@@ -105,8 +105,8 @@ void main() {
     expect(updated!.lastPosition, 850);
 
     // Mark as completed
-    await db.progressDao.upsertProgress(
-        textUid: uid, lastPosition: 1000, completed: true);
+    await db.progressDao
+        .upsertProgress(textUid: uid, lastPosition: 1000, completed: true);
     final completed = await db.progressDao.getProgressForUid(uid);
     expect(completed!.completed, isTrue);
   });

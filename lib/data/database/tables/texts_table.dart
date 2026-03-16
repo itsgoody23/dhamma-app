@@ -20,6 +20,6 @@ class Texts extends Table {
 
   @override
   List<Set<Column>> get uniqueKeys => [
-    {uid, language},
-  ];
+        {uid, language},
+      ];
 }
