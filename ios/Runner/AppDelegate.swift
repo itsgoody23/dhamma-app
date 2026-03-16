@@ -1,6 +1,6 @@
 import UIKit
 import Flutter
-import workmanager
+import workmanager_apple
 
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
@@ -11,7 +11,7 @@ import workmanager
     // Register WorkManager BGTask identifier for one-off pack downloads.
     // Must match the identifier in Info.plist BGTaskSchedulerPermittedIdentifiers
     // and the task name used in BackgroundDownloadService.
-    WorkmanagerPlugin.registerTask(withIdentifier: "dhamma_pack_download")
+    WorkmanagerPlugin.registerBGProcessingTask(withIdentifier: "dhamma_pack_download")
 
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)

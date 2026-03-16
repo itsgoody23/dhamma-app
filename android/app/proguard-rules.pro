@@ -26,6 +26,11 @@
 # Keep Dhamma app classes
 -keep class app.dhamma.** { *; }
 
+# Play Core (referenced by Flutter deferred components but not used)
+-dontwarn com.google.android.play.core.splitcompat.**
+-dontwarn com.google.android.play.core.splitinstall.**
+-dontwarn com.google.android.play.core.tasks.**
+
 # Remove debug logging in release
 -assumenosideeffects class android.util.Log {
     public static *** d(...);
