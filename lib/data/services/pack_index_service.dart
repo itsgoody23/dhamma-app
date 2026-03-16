@@ -7,7 +7,8 @@ import 'package:path_provider/path_provider.dart';
 
 import '../models/content_pack.dart';
 
-const _manifestUrl = 'https://cdn.dhamma.app/packs/manifest.json';
+const _manifestUrl =
+    'https://difjbtoydrpspabqbndl.supabase.co/storage/v1/object/public/packs/pack_manifest.json';
 const _cacheFilename = 'pack_manifest_cache.json';
 const _cacheTtlHours = 24;
 
