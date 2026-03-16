@@ -61,7 +61,7 @@ final class NikayaProgressProvider
   }
 }
 
-String _$nikayaProgressHash() => r'78468d831d24f619efa9b3b5e05249e24658e071';
+String _$nikayaProgressHash() => r'06f4f304bad14ca7fde2774f3d0039b5acd59e62';
 
 final class NikayaProgressFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<double>, String> {

@@ -15,6 +15,7 @@ from etl_pipeline import (
     create_seed_db,
     build_manifest,
     compress_db,
+    split_by_nikaya,
 )
 
 
@@ -166,6 +167,74 @@ def test_build_manifest():
     assert manifest["version"] == "2026.03.15"
     assert len(manifest["packs"]) == 1
     assert manifest["packs"][0]["pack_id"] == "mn_en"
+
+
+def test_same_uid_different_languages():
+    """UNIQUE(uid, language) allows the same sutta in English + Pāli."""
+    with tempfile.TemporaryDirectory() as tmp:
+        db_path = Path(tmp) / "test.db"
+        conn = create_database(db_path)
+        rows = [
+            {
+                "uid": "mn1", "title": "Root of All Things",
+                "collection": None, "nikaya": "mn", "book": None,
+                "chapter": None, "language": "en", "translator": "sujato",
+                "source": "sc", "content_html": "<p>English text</p>",
+                "content_plain": "English text",
+            },
+            {
+                "uid": "mn1", "title": "Mūlapariyāyasutta",
+                "collection": None, "nikaya": "mn", "book": None,
+                "chapter": None, "language": "pli", "translator": "ms",
+                "source": "sc", "content_html": "<p>Pāli text</p>",
+                "content_plain": "Pāli text",
+            },
+        ]
+        count = insert_rows(conn, rows)
+        assert count == 2
+
+        total = conn.execute("SELECT COUNT(*) FROM texts").fetchone()[0]
+        assert total == 2
+
+        en = conn.execute("SELECT title FROM texts WHERE uid='mn1' AND language='en'").fetchone()
+        pli = conn.execute("SELECT title FROM texts WHERE uid='mn1' AND language='pli'").fetchone()
+        assert en[0] == "Root of All Things"
+        assert pli[0] == "Mūlapariyāyasutta"
+        conn.close()
+
+
+def test_split_by_nikaya_with_language():
+    """split_by_nikaya with language param produces language-specific pack."""
+    with tempfile.TemporaryDirectory() as tmp:
+        db_path = Path(tmp) / "full.db"
+        conn = create_database(db_path)
+        rows = [
+            {"uid": "mn1", "title": "MN1 EN", "collection": None, "nikaya": "mn",
+             "book": None, "chapter": None, "language": "en", "translator": "sujato",
+             "source": "sc", "content_html": "<p>EN</p>", "content_plain": "EN"},
+            {"uid": "mn1", "title": "MN1 PLI", "collection": None, "nikaya": "mn",
+             "book": None, "chapter": None, "language": "pli", "translator": "ms",
+             "source": "sc", "content_html": "<p>PLI</p>", "content_plain": "PLI"},
+            {"uid": "sn1.1", "title": "SN1 EN", "collection": None, "nikaya": "sn",
+             "book": None, "chapter": None, "language": "en", "translator": "sujato",
+             "source": "sc", "content_html": "<p>EN</p>", "content_plain": "EN"},
+        ]
+        insert_rows(conn, rows)
+        conn.close()
+
+        output = Path(tmp) / "packs"
+        output.mkdir()
+
+        # Split mn_pli only
+        pack_path = split_by_nikaya(db_path, "mn", output, language="pli")
+        assert pack_path.name == "mn_pli_pack.db"
+
+        pack_conn = sqlite3.connect(str(pack_path))
+        count = pack_conn.execute("SELECT COUNT(*) FROM texts").fetchone()[0]
+        assert count == 1
+        lang = pack_conn.execute("SELECT language FROM texts").fetchone()[0]
+        assert lang == "pli"
+        pack_conn.close()
 
 
 def test_insert_no_duplicates():

@@ -39,7 +39,7 @@ PRAGMA foreign_keys=ON;
 
 CREATE TABLE IF NOT EXISTS texts (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    uid           TEXT NOT NULL UNIQUE,
+    uid           TEXT NOT NULL,
     title         TEXT NOT NULL,
     collection    TEXT,
     nikaya        TEXT NOT NULL,
@@ -49,7 +49,8 @@ CREATE TABLE IF NOT EXISTS texts (
     translator    TEXT,
     source        TEXT,
     content_html  TEXT,
-    content_plain TEXT
+    content_plain TEXT,
+    UNIQUE(uid, language)
 );
 
 CREATE TABLE IF NOT EXISTS translations (
@@ -328,6 +329,72 @@ def _extract_bilara_title(trans_segments: dict, uid: str) -> str:
     return uid
 
 
+def parse_root_texts(sc_data_path: Path, structure: dict) -> list[dict]:
+    """
+    Parse Pāli root texts from sc_bilara_data/root/pli/ms/sutta/.
+    Same segment-keyed JSON format as translations.
+    """
+    bilara_root = sc_data_path / "sc_bilara_data"
+    root_dir = bilara_root / "root" / "pli" / "ms" / "sutta"
+    html_template_root = bilara_root / "html"
+    rows = []
+
+    if not root_dir.exists():
+        log.warning(f"No Pāli root text directory at {root_dir}")
+        return rows
+
+    root_files = list(root_dir.rglob("*.json"))
+    log.info(f"Processing {len(root_files):,} Pāli root text files")
+
+    for root_file in tqdm(root_files, desc="pli/ms", unit="file"):
+        try:
+            # Extract UID from filename: mn1_root-pli-ms.json → mn1
+            stem = root_file.stem
+            uid = stem.split("_")[0]
+
+            # Derive nikaya from path
+            rel = root_file.relative_to(root_dir)
+            nikaya = rel.parts[0] if len(rel.parts) > 1 else uid[:2]
+
+            # Load root text segments
+            segments: dict = json.loads(root_file.read_text(encoding="utf-8"))
+            if not segments:
+                continue
+
+            # Load HTML template
+            html_template_path = html_template_root / "pli" / "ms" / "sutta" / nikaya / f"{uid}_html.json"
+            html_segments: dict = {}
+            if html_template_path.exists():
+                html_segments = json.loads(html_template_path.read_text(encoding="utf-8"))
+
+            content_html = _merge_bilara(html_segments, segments, uid)
+            content_plain = html_to_plain(content_html) if content_html else " ".join(
+                v for v in segments.values() if v
+            )
+
+            title = _extract_bilara_title(segments, uid)
+            meta = structure.get(uid, {})
+
+            rows.append({
+                "uid": uid,
+                "title": title,
+                "collection": meta.get("collection"),
+                "nikaya": nikaya,
+                "book": meta.get("book"),
+                "chapter": meta.get("chapter"),
+                "language": "pli",
+                "translator": "ms",
+                "source": "sc",
+                "content_html": content_html or content_plain,
+                "content_plain": content_plain,
+            })
+        except Exception as e:
+            log.debug(f"Skip {root_file}: {e}")
+
+    log.info(f"Pāli root texts extracted: {len(rows):,}")
+    return rows
+
+
 # ── Database helpers ──────────────────────────────────────────────────────────
 
 def create_database(db_path: Path) -> sqlite3.Connection:
@@ -361,9 +428,12 @@ def finalise_database(conn: sqlite3.Connection):
     conn.close()
 
 
-def split_by_nikaya(source_db_path: Path, nikaya: str, output_dir: Path) -> Path:
-    """Create a per-nikaya pack DB by copying matching rows from the full DB."""
-    pack_path = output_dir / f"{nikaya}_pack.db"
+def split_by_nikaya(source_db_path: Path, nikaya: str, output_dir: Path, language: str | None = None) -> Path:
+    """Create a per-nikaya (optionally per-language) pack DB by copying matching rows from the full DB."""
+    if language:
+        pack_path = output_dir / f"{nikaya}_{language}_pack.db"
+    else:
+        pack_path = output_dir / f"{nikaya}_pack.db"
 
     src = sqlite3.connect(str(source_db_path))
     dst = sqlite3.connect(str(pack_path))
@@ -371,10 +441,16 @@ def split_by_nikaya(source_db_path: Path, nikaya: str, output_dir: Path) -> Path
     dst.executescript(FTS5_DDL)
     dst.commit()
 
-    rows = src.execute(
-        "SELECT uid, title, collection, nikaya, book, chapter, language, translator, source, content_html, content_plain FROM texts WHERE nikaya = ?",
-        (nikaya,),
-    ).fetchall()
+    if language:
+        rows = src.execute(
+            "SELECT uid, title, collection, nikaya, book, chapter, language, translator, source, content_html, content_plain FROM texts WHERE nikaya = ? AND language = ?",
+            (nikaya, language),
+        ).fetchall()
+    else:
+        rows = src.execute(
+            "SELECT uid, title, collection, nikaya, book, chapter, language, translator, source, content_html, content_plain FROM texts WHERE nikaya = ?",
+            (nikaya,),
+        ).fetchall()
 
     dst.executemany(
         "INSERT OR IGNORE INTO texts (uid, title, collection, nikaya, book, chapter, language, translator, source, content_html, content_plain) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
@@ -482,8 +558,14 @@ def main(sc_data_path, output_dir, languages, packs, cdn_base_url, seed):
     # Build structure index
     structure = load_structure(sc_data)
 
-    # Parse all HTML texts
-    all_rows = parse_html_texts(sc_data, lang_list, structure)
+    # Parse translation texts (en, de, etc.)
+    translation_langs = [l for l in lang_list if l != "pli"]
+    all_rows = parse_html_texts(sc_data, translation_langs, structure) if translation_langs else []
+
+    # Parse Pāli root texts if requested
+    if "pli" in lang_list:
+        pli_rows = parse_root_texts(sc_data, structure)
+        all_rows.extend(pli_rows)
 
     if not all_rows:
         log.error("No rows extracted — check sc-data path and language codes")
@@ -497,28 +579,31 @@ def main(sc_data_path, output_dir, languages, packs, cdn_base_url, seed):
     finalise_database(conn)
     log.info(f"Inserted {inserted:,} rows")
 
-    # Split into per-nikaya packs, compress, build manifest
+    # Split into per-nikaya per-language packs, compress, build manifest
     packs_meta = []
     for nikaya in nikaya_list:
-        log.info(f"Building pack: {nikaya}")
-        pack_db = split_by_nikaya(full_db_path, nikaya, output)
-        gz_path = compress_db(pack_db)
-        pack_db.unlink()  # Remove uncompressed pack
-
-        size_mb = round(gz_path.stat().st_size / 1_048_576, 2)
-        original_size_mb = round(full_db_path.stat().st_size / 1_048_576, 2)
-
-        # Count suttas in pack
-        temp = sqlite3.connect(":memory:")
-        temp.close()
-        src = sqlite3.connect(str(full_db_path))
-        count = src.execute("SELECT COUNT(*) FROM texts WHERE nikaya = ?", (nikaya,)).fetchone()[0]
-        src.close()
-
-        checksum = sha256_of(gz_path)
-        filename = gz_path.name
-
         for lang in lang_list:
+            log.info(f"Building pack: {nikaya}_{lang}")
+            pack_db = split_by_nikaya(full_db_path, nikaya, output, language=lang)
+
+            # Count suttas in pack before compressing
+            src = sqlite3.connect(str(pack_db))
+            count = src.execute("SELECT COUNT(*) FROM texts").fetchone()[0]
+            original_size_mb = round(pack_db.stat().st_size / 1_048_576, 2)
+            src.close()
+
+            if count == 0:
+                log.warning(f"No texts for {nikaya}_{lang}, skipping")
+                pack_db.unlink()
+                continue
+
+            gz_path = compress_db(pack_db)
+            pack_db.unlink()  # Remove uncompressed pack
+
+            size_mb = round(gz_path.stat().st_size / 1_048_576, 2)
+            checksum = sha256_of(gz_path)
+            filename = gz_path.name
+
             packs_meta.append({
                 "pack_id": f"{nikaya}_{lang}",
                 "pack_name": _nikaya_label(nikaya, lang),

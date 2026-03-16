@@ -21,9 +21,7 @@ class $TextsTable extends Texts with TableInfo<$TextsTable, SuttaText> {
   @override
   late final GeneratedColumn<String> uid = GeneratedColumn<String>(
       'uid', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
@@ -173,6 +171,10 @@ class $TextsTable extends Texts with TableInfo<$TextsTable, SuttaText> {
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+        {uid, language},
+      ];
   @override
   SuttaText map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';

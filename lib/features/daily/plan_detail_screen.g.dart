@@ -61,7 +61,7 @@ final class PlanByIdProvider extends $FunctionalProvider<
   }
 }
 
-String _$planByIdHash() => r'dbe3ecb519855b4b82f3abb88c0d99d01bbb2cd1';
+String _$planByIdHash() => r'58ca3ef6a7c00517618dd503954228dea1a308a9';
 
 final class PlanByIdFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<ReadingPlan?>, String> {
@@ -139,7 +139,7 @@ final class PlanProgressProvider extends $FunctionalProvider<
   }
 }
 
-String _$planProgressHash() => r'e765a16550a3673e18c768b0c4c00cc2e2f8c77f';
+String _$planProgressHash() => r'fee848a24fc8dfa67eb0bd3127520f0604d3824a';
 
 final class PlanProgressFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Map<String, bool>>, String> {

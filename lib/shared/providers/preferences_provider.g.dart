@@ -88,7 +88,7 @@ final class ReaderFontSizeNotifierProvider
 }
 
 String _$readerFontSizeNotifierHash() =>
-    r'eac00f59e7616674281fb27a164fa0279c8508d0';
+    r'c74163e005c8875c8f740839a51fd507282d1acb';
 
 abstract class _$ReaderFontSizeNotifier extends $Notifier<double> {
   double build();

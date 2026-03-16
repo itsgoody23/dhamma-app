@@ -52,7 +52,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -62,7 +62,17 @@ class AppDatabase extends _$AppDatabase {
           await _createIndexes();
         },
         onUpgrade: (m, from, to) async {
-          // Future migrations go here
+          if (from < 2) {
+            // v1 → v2: Change UNIQUE(uid) to UNIQUE(uid, language)
+            // to support multiple languages per sutta (e.g. English + Pāli).
+            await customStatement(
+              'DROP INDEX IF EXISTS sqlite_autoindex_texts_1',
+            );
+            await customStatement(
+              'CREATE UNIQUE INDEX IF NOT EXISTS idx_texts_uid_language '
+              'ON texts(uid, language)',
+            );
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA journal_mode=WAL');
