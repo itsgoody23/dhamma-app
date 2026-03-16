@@ -1,0 +1,56 @@
+[
+  {
+    "id": "dhammapada_30",
+    "title": "30-Day Dhammapada",
+    "description": "Work through the Dhammapada one chapter per day — a beautiful introduction to the Dhamma",
+    "days": [
+      {"day": 1,  "uid": "dhp1-20",   "title": "Chapter I: The Pairs",          "description": "Mind is the forerunner of all actions."},
+      {"day": 2,  "uid": "dhp21-32",  "title": "Chapter II: Heedfulness",       "description": "Heedfulness is the path to the deathless."},
+      {"day": 3,  "uid": "dhp33-43",  "title": "Chapter III: The Mind",         "description": "The mind is hard to restrain, swift, and wanders where it will."},
+      {"day": 4,  "uid": "dhp44-59",  "title": "Chapter IV: Flowers",           "description": "Who shall conquer this earth, this world of Yama?"},
+      {"day": 5,  "uid": "dhp60-75",  "title": "Chapter V: The Fool",           "description": "Long is the night for the wakeful; long is the league for the weary."},
+      {"day": 6,  "uid": "dhp76-89",  "title": "Chapter VI: The Wise",          "description": "Were one to live a hundred years without wisdom and composure..."},
+      {"day": 7,  "uid": "dhp90-99",  "title": "Chapter VII: The Arahant",      "description": "One whose taints are destroyed, who is not attached to food..."},
+      {"day": 8,  "uid": "dhp100-115","title": "Chapter VIII: Thousands",        "description": "Better than a thousand hollow words is one meaningful word."},
+      {"day": 9,  "uid": "dhp116-128","title": "Chapter IX: Evil",               "description": "Rush to do good, restrain your mind from evil."},
+      {"day": 10, "uid": "dhp129-145","title": "Chapter X: The Rod",             "description": "All tremble at the rod, all fear death."},
+      {"day": 11, "uid": "dhp146-156","title": "Chapter XI: Old Age",            "description": "Why is there laughter, why is there joy, when the world is always burning?"},
+      {"day": 12, "uid": "dhp157-166","title": "Chapter XII: The Self",          "description": "If one holds oneself dear, one should protect oneself well."},
+      {"day": 13, "uid": "dhp167-178","title": "Chapter XIII: The World",        "description": "Don't follow a corrupt life, don't be negligent."},
+      {"day": 14, "uid": "dhp179-196","title": "Chapter XIV: The Awakened One",  "description": "One whose victory cannot be turned into defeat..."},
+      {"day": 15, "uid": "dhp197-208","title": "Chapter XV: Happiness",          "description": "Happy indeed are we who live without hate among the hateful."},
+      {"day": 16, "uid": "dhp209-220","title": "Chapter XVI: Affection",         "description": "Give yourself to distraction and you miss your purpose."},
+      {"day": 17, "uid": "dhp221-234","title": "Chapter XVII: Anger",            "description": "Leave anger, abandon conceit."},
+      {"day": 18, "uid": "dhp235-255","title": "Chapter XVIII: Impurities",      "description": "You are like a yellowed leaf; death's minions are waiting for you."},
+      {"day": 19, "uid": "dhp256-272","title": "Chapter XIX: The Just",          "description": "Don't be hasty in judging others."},
+      {"day": 20, "uid": "dhp273-289","title": "Chapter XX: The Path",           "description": "The Eightfold Path is the best of paths."},
+      {"day": 21, "uid": "dhp290-305","title": "Chapter XXI: Miscellaneous",     "description": "If by forsaking a minor pleasure one sees a major pleasure..."},
+      {"day": 22, "uid": "dhp306-319","title": "Chapter XXII: Hell",             "description": "Speakers of falsehood go to hell."},
+      {"day": 23, "uid": "dhp320-333","title": "Chapter XXIII: The Elephant",    "description": "As the elephant in battle endures arrows shot into it..."},
+      {"day": 24, "uid": "dhp334-359","title": "Chapter XXIV: Craving",          "description": "The craving of a heedless person grows like a maluva creeper."},
+      {"day": 25, "uid": "dhp360-382","title": "Chapter XXV: The Monk",          "description": "Restraint of the eye is good; restraint of the ear is good."},
+      {"day": 26, "uid": "dhp383-423","title": "Chapter XXVI: The Brahman",      "description": "I call that person a brahman who has cut all fetters."},
+      {"day": 27, "uid": "mn10",      "title": "Satipaṭṭhāna Sutta",            "description": "The direct path — foundations of mindfulness."},
+      {"day": 28, "uid": "sn56.11",   "title": "Setting the Wheel of Dhamma",   "description": "The first discourse of the Buddha."},
+      {"day": 29, "uid": "an4.159",   "title": "Lovingkindness",                "description": "May all beings be happy and secure."},
+      {"day": 30, "uid": "mn26",      "title": "The Noble Search",              "description": "The search for the unborn, the unaging, the undying."}
+    ]
+  },
+  {
+    "id": "mn_intro",
+    "title": "Introduction to the MN",
+    "description": "10 key suttas from the Majjhima Nikāya — perfect for a first exploration",
+    "days": [
+      {"day": 1,  "uid": "mn1",   "title": "The Root of All Things"},
+      {"day": 2,  "uid": "mn2",   "title": "All the Taints"},
+      {"day": 3,  "uid": "mn7",   "title": "The Simile of the Cloth"},
+      {"day": 4,  "uid": "mn10",  "title": "The Foundations of Mindfulness"},
+      {"day": 5,  "uid": "mn22",  "title": "The Simile of the Snake"},
+      {"day": 6,  "uid": "mn36",  "title": "The Greater Discourse to Saccaka"},
+      {"day": 7,  "uid": "mn63",  "title": "To Māluṅkyaputta (Lesser)"},
+      {"day": 8,  "uid": "mn95",  "title": "To Caṅkī"},
+      {"day": 9,  "uid": "mn118", "title": "Mindfulness of Breathing"},
+      {"day": 10, "uid": "mn131", "title": "One Fine Night"}
+    ]
+  }
+]

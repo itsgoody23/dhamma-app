@@ -1,0 +1,39 @@
+Dhamma App
+Copyright 2026 Dhamma App Contributors
+
+This product includes software developed for the Dhamma App project
+and makes use of the following third-party content:
+
+────────────────────────────────────────────────────────────────────
+
+Noto Serif and Noto Serif Sinhala fonts
+Copyright 2022 The Noto Project Authors
+Licensed under the SIL Open Font License 1.1 (see assets/fonts/OFL.txt)
+https://fonts.google.com/noto
+
+────────────────────────────────────────────────────────────────────
+
+Sutta text content (where included) sourced from:
+
+• SuttaCentral (suttacentral.net)
+  Most translations are in the public domain (CC0) or Creative Commons.
+  Individual translator attributions are shown within the app.
+  See: https://suttacentral.net/licensing
+
+• Access to Insight (accesstoinsight.org)
+  Selected translations licensed under Creative Commons Attribution 4.0
+  (CC-BY 4.0). Translator names are shown in the reader.
+  See: https://accesstoinsight.org/about.html
+
+────────────────────────────────────────────────────────────────────
+
+Flutter and Dart SDK
+Copyright 2014 The Flutter Authors
+Licensed under the BSD 3-Clause License
+https://flutter.dev
+
+────────────────────────────────────────────────────────────────────
+
+All other third-party package licenses are available via:
+  flutter pub licenses
+or in the in-app About > Licences screen.

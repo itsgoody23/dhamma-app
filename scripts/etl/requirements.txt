@@ -1,0 +1,4 @@
+beautifulsoup4==4.12.3
+tqdm==4.66.2
+click==8.1.7
+pytest==8.2.0
