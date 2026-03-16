@@ -11,6 +11,8 @@ import '../../features/daily/daily_screen.dart';
 import '../../features/daily/plan_detail_screen.dart';
 import '../../features/study_tools/study_tools_screen.dart';
 import '../../features/downloads/downloads_screen.dart';
+import '../../features/auth/login_screen.dart';
+import '../../features/auth/profile_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../shared/widgets/main_shell.dart';
 import 'routes.dart';
@@ -105,6 +107,14 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.settings,
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: Routes.login,
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: Routes.profile,
+        builder: (context, state) => const ProfileScreen(),
       ),
     ],
   );

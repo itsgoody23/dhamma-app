@@ -13,6 +13,7 @@ abstract final class PrefKeys {
   static const String readerFontSize = 'reader_font_size';
   static const String readerLanguage = 'reader_language';
   static const String wifiOnlyDownloads = 'wifi_only_downloads';
+  static const String wifiOnlySync = 'wifi_only_sync';
   static const String audioOnlyOnMobileData = 'audio_only_mobile_data';
 }
 
@@ -102,6 +103,28 @@ class ReaderLanguageNotifier extends _$ReaderLanguageNotifier {
     state = lang;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(PrefKeys.readerLanguage, lang);
+  }
+}
+
+// ── Wi-Fi only sync ──────────────────────────────────────────────────────────
+
+@riverpod
+class WifiOnlySyncNotifier extends _$WifiOnlySyncNotifier {
+  @override
+  bool build() {
+    _load();
+    return true;
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool(PrefKeys.wifiOnlySync) ?? true;
+  }
+
+  Future<void> set(bool value) async {
+    state = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(PrefKeys.wifiOnlySync, value);
   }
 }
 

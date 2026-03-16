@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/routing/routes.dart';
+import '../../shared/providers/auth_provider.dart';
 import '../../shared/providers/preferences_provider.dart';
 
 // Note: add url_launcher: ^6.3.0 to pubspec.yaml
@@ -55,6 +58,42 @@ class SettingsScreen extends ConsumerWidget {
               value: wifiOnly,
               activeTrackColor: AppColors.green,
               onChanged: (v) => ref.read(wifiOnlyProvider.notifier).set(v),
+            );
+          }),
+
+          const Divider(),
+
+          // ── Account ─────────────────────────────────────────────────────
+          const _SectionHeader(title: 'Account'),
+          Consumer(builder: (context, ref, _) {
+            final user = ref.watch(currentUserProvider);
+            if (user != null) {
+              return Column(children: [
+                ListTile(
+                  title: Text(user.email ?? 'Signed in'),
+                  subtitle: const Text('Manage account'),
+                  leading: const Icon(Icons.person_outlined),
+                  onTap: () => context.push(Routes.profile),
+                ),
+                Consumer(builder: (context, ref, _) {
+                  final wifiOnlySync = ref.watch(wifiOnlySyncProvider);
+                  return SwitchListTile(
+                    title: const Text('Sync on Wi-Fi only'),
+                    subtitle: const Text('Prevents sync on mobile data'),
+                    secondary: const Icon(Icons.sync_outlined),
+                    value: wifiOnlySync,
+                    activeTrackColor: AppColors.green,
+                    onChanged: (v) =>
+                        ref.read(wifiOnlySyncProvider.notifier).set(v),
+                  );
+                }),
+              ]);
+            }
+            return ListTile(
+              title: const Text('Sign in'),
+              subtitle: const Text('Sync your progress across devices'),
+              leading: const Icon(Icons.login_outlined),
+              onTap: () => context.push(Routes.login),
             );
           }),
 

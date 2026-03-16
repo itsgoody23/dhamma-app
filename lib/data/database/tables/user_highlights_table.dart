@@ -7,6 +7,12 @@ class UserHighlights extends Table {
   IntColumn get endOffset => integer().named('end_offset')();
   // Stored as hex string e.g. '#FFF176'
   TextColumn get colour => text()();
+  TextColumn get userId => text().named('user_id').nullable()();
   DateTimeColumn get createdAt =>
       dateTime().named('created_at').withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt =>
+      dateTime().named('updated_at').withDefault(currentDateAndTime)();
+  DateTimeColumn get syncedAt => dateTime().named('synced_at').nullable()();
+  BoolColumn get isDeleted =>
+      boolean().named('is_deleted').withDefault(const Constant(false))();
 }

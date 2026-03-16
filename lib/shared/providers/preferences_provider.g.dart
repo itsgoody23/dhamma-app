@@ -149,6 +149,53 @@ abstract class _$ReaderLanguageNotifier extends $Notifier<String> {
   }
 }
 
+@ProviderFor(WifiOnlySyncNotifier)
+final wifiOnlySyncProvider = WifiOnlySyncNotifierProvider._();
+
+final class WifiOnlySyncNotifierProvider
+    extends $NotifierProvider<WifiOnlySyncNotifier, bool> {
+  WifiOnlySyncNotifierProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'wifiOnlySyncProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$wifiOnlySyncNotifierHash();
+
+  @$internal
+  @override
+  WifiOnlySyncNotifier create() => WifiOnlySyncNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$wifiOnlySyncNotifierHash() =>
+    r'b8e348bd24759dbc39cdb271c75a403a382f6c99';
+
+abstract class _$WifiOnlySyncNotifier extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<bool, bool>, bool, Object?, Object?>;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(WifiOnlyNotifier)
 final wifiOnlyProvider = WifiOnlyNotifierProvider._();
 

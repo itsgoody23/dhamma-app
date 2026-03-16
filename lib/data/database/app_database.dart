@@ -52,7 +52,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -71,6 +71,62 @@ class AppDatabase extends _$AppDatabase {
             await customStatement(
               'CREATE UNIQUE INDEX IF NOT EXISTS idx_texts_uid_language '
               'ON texts(uid, language)',
+            );
+          }
+          if (from < 3) {
+            // v2 → v3: Add sync columns (user_id, updated_at, synced_at,
+            // is_deleted) to all user tables for cloud sync support.
+            for (final table in [
+              'user_bookmarks',
+              'user_highlights',
+              'user_progress',
+            ]) {
+              await customStatement(
+                'ALTER TABLE $table ADD COLUMN user_id TEXT',
+              );
+              await customStatement(
+                'ALTER TABLE $table ADD COLUMN updated_at '
+                'DATETIME DEFAULT CURRENT_TIMESTAMP',
+              );
+              await customStatement(
+                'ALTER TABLE $table ADD COLUMN synced_at DATETIME',
+              );
+              await customStatement(
+                'ALTER TABLE $table ADD COLUMN is_deleted '
+                'INTEGER NOT NULL DEFAULT 0',
+              );
+            }
+            // user_notes already has updated_at
+            await customStatement(
+              'ALTER TABLE user_notes ADD COLUMN user_id TEXT',
+            );
+            await customStatement(
+              'ALTER TABLE user_notes ADD COLUMN synced_at DATETIME',
+            );
+            await customStatement(
+              'ALTER TABLE user_notes ADD COLUMN is_deleted '
+              'INTEGER NOT NULL DEFAULT 0',
+            );
+            // Backfill updated_at from created_at for existing rows
+            for (final table in [
+              'user_bookmarks',
+              'user_highlights',
+              'user_progress',
+            ]) {
+              await customStatement(
+                'UPDATE $table SET updated_at = created_at '
+                'WHERE updated_at IS NULL',
+              );
+            }
+            // Drop old single-column unique indexes
+            await customStatement(
+              'DROP INDEX IF EXISTS sqlite_autoindex_user_bookmarks_1',
+            );
+            await customStatement(
+              'DROP INDEX IF EXISTS sqlite_autoindex_user_notes_1',
+            );
+            await customStatement(
+              'DROP INDEX IF EXISTS sqlite_autoindex_user_progress_1',
             );
           }
         },
@@ -161,6 +217,23 @@ class AppDatabase extends _$AppDatabase {
     } catch (e) {
       // Non-fatal: daily sutta feature degrades gracefully if seed fails.
       // The extracted file (if any) is cleaned up on next launch.
+    }
+  }
+
+  /// Claim all orphaned local rows (user_id IS NULL) for [userId].
+  /// Called once after the user's first sign-in so existing offline
+  /// data gets associated with their account and synced.
+  Future<void> claimLocalData(String userId) async {
+    for (final table in [
+      'user_bookmarks',
+      'user_highlights',
+      'user_notes',
+      'user_progress',
+    ]) {
+      await customStatement(
+        'UPDATE $table SET user_id = ? WHERE user_id IS NULL',
+        [userId],
+      );
     }
   }
 

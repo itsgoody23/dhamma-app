@@ -11,6 +11,8 @@ abstract final class Routes {
   static const String downloads = '/downloads';
   static const String settings = '/settings';
   static const String planDetail = '/daily/plan/:planId';
+  static const String login = '/login';
+  static const String profile = '/profile';
 
   static String readerPath(String uid) => '/reader/$uid';
   static String nikayaPath(String nikaya) => '/library/$nikaya';
