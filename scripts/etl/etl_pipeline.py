@@ -412,33 +412,42 @@ def build_manifest(packs_meta: list[dict], version: str) -> dict:
 
 # ── Seed DB ───────────────────────────────────────────────────────────────────
 
-SEED_SUTTAS = [
-    # day_of_year, uid, title, verse_excerpt, nikaya
-    (1, "dhp1-20", "The Pairs (Yamaka-vagga)", "Mind is the forerunner of all actions.", "kn"),
-    (2, "mn10", "The Discourse on the Foundations of Mindfulness", "There is one way, monks, for the purification of beings.", "mn"),
-    (3, "sn56.11", "Setting the Wheel of Dhamma in Motion", "These two extremes should not be practised.", "sn"),
-    (4, "dn22", "The Great Discourse on the Foundations of Mindfulness", "This is the direct path for the purification of beings.", "dn"),
-    (5, "an4.159", "With Metta", "May all beings be happy and secure.", "an"),
-    (6, "dhp183-220", "The Buddha (Buddha-vagga)", "Not to do evil, to cultivate good.", "kn"),
-    (7, "mn118", "Mindfulness of Breathing", "Mindfulness of breathing, developed and cultivated, is of great fruit.", "mn"),
-    (8, "sn22.59", "Not Self (Anattalakkhaṇa Sutta)", "Form is not self. Were form self, then form would not lead to affliction.", "sn"),
-    (9, "dn2", "The Fruits of the Contemplative Life", "Just as if there were a lake in a mountain glen.", "dn"),
-    (10, "an8.53", "On Gifts", "There are these eight reasons for giving a gift.", "an"),
-    # ... (365 entries in production; ETL script accepts a --seed-json flag for the full list)
-]
+def _load_seed_suttas() -> list[tuple]:
+    """Load seed suttas from seed_suttas_365.json if available, else use built-in fallback."""
+    seed_json = Path(__file__).resolve().parent / "output" / "seed_suttas_365.json"
+    if seed_json.exists():
+        data = json.loads(seed_json.read_text(encoding="utf-8"))
+        return [
+            (s["day_of_year"], s["uid"], s["title"], s["verse_excerpt"], s["nikaya"])
+            for s in data
+        ]
+    # Fallback: 10 well-known suttas for dev/test
+    return [
+        (1, "dhp1-20", "The Pairs (Yamaka-vagga)", "Mind is the forerunner of all actions.", "kn"),
+        (2, "mn10", "The Discourse on the Foundations of Mindfulness", "There is one way, monks, for the purification of beings.", "mn"),
+        (3, "sn56.11", "Setting the Wheel of Dhamma in Motion", "These two extremes should not be practised.", "sn"),
+        (4, "dn22", "The Great Discourse on the Foundations of Mindfulness", "This is the direct path for the purification of beings.", "dn"),
+        (5, "an4.159", "With Metta", "May all beings be happy and secure.", "an"),
+        (6, "dhp183-220", "The Buddha (Buddha-vagga)", "Not to do evil, to cultivate good.", "kn"),
+        (7, "mn118", "Mindfulness of Breathing", "Mindfulness of breathing, developed and cultivated, is of great fruit.", "mn"),
+        (8, "sn22.59", "Not Self (Anattalakkhaṇa Sutta)", "Form is not self. Were form self, then form would not lead to affliction.", "sn"),
+        (9, "dn2", "The Fruits of the Contemplative Life", "Just as if there were a lake in a mountain glen.", "dn"),
+        (10, "an8.53", "On Gifts", "There are these eight reasons for giving a gift.", "an"),
+    ]
 
 
 def create_seed_db(output_dir: Path) -> Path:
     seed_path = output_dir / "dhamma_seed.db"
+    seed_suttas = _load_seed_suttas()
     conn = sqlite3.connect(str(seed_path))
     conn.executescript(SEED_DDL)
     conn.executemany(
         "INSERT OR IGNORE INTO daily_suttas (day_of_year, uid, title, verse_excerpt, nikaya) VALUES (?,?,?,?,?)",
-        SEED_SUTTAS,
+        seed_suttas,
     )
     conn.commit()
     conn.close()
-    log.info(f"Seed DB written to {seed_path}")
+    log.info(f"Seed DB written to {seed_path} ({len(seed_suttas)} entries)")
     return seed_path
 
 

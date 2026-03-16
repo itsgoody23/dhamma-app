@@ -13,6 +13,7 @@ import '../../shared/providers/database_provider.dart';
 import '../../shared/providers/preferences_provider.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_shimmer.dart';
+import '../../shared/widgets/translator_attribution.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -239,7 +240,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                             ),
                       const SizedBox(height: AppSizes.xl),
                       // Translator attribution (CC-BY requirement)
-                      _TranslatorAttribution(
+                      TranslatorAttributionWidget(
                         translator: sutta.translator,
                         source: sutta.source ?? 'sc',
                         uid: sutta.uid,
@@ -336,58 +337,3 @@ class _Toolbar extends ConsumerWidget {
   }
 }
 
-// ── Translator Attribution ───────────────────────────────────────────────────
-
-class _TranslatorAttribution extends StatelessWidget {
-  const _TranslatorAttribution({
-    required this.translator,
-    required this.source,
-    required this.uid,
-  });
-
-  final String? translator;
-  final String source;
-  final String uid;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final sourceLabel = source == 'sc' ? 'SuttaCentral' : source;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSizes.md),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(AppSizes.sm),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (translator != null)
-            Text(
-              'Translation by $translator',
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          const SizedBox(height: 2),
-          Text(
-            'Source: $sourceLabel · $uid',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'This translation is published under a Creative Commons Attribution licence (CC BY).',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontSize: 11,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

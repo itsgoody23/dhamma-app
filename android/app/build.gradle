@@ -24,12 +24,13 @@ if (flutterVersionName == null) {
 
 android {
     namespace "app.dhamma"
-    compileSdk 34
+    compileSdk 36
+    ndkVersion "28.2.13676358"
 
     defaultConfig {
         applicationId "app.dhamma"
         minSdk 23         // Android 6.0
-        targetSdk 34
+        targetSdk 36
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true
