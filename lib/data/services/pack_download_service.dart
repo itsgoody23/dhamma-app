@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
@@ -89,8 +90,10 @@ class PackDownloadService {
     final dbPath = p.join(packsDir.path, '${packId}_tmp.db');
 
     try {
-      // ── Schedule background resumption task ──────────────────────────────
-      await BackgroundDownloadService.schedulePackDownload(packId);
+      // ── Schedule background resumption task (mobile only) ─────────────
+      if (_isMobile) {
+        await BackgroundDownloadService.schedulePackDownload(packId);
+      }
 
       // ── Download ────────────────────────────────────────────────────────
       _emit(
@@ -151,7 +154,7 @@ class PackDownloadService {
         ),
       );
 
-      await BackgroundDownloadService.clearPending();
+      if (_isMobile) await BackgroundDownloadService.clearPending();
       _emit(
           packId,
           DownloadProgress(
@@ -161,7 +164,9 @@ class PackDownloadService {
           ));
     } on DioException catch (e) {
       if (e.type == DioExceptionType.cancel) {
-        await BackgroundDownloadService.cancelPackDownload(packId);
+        if (_isMobile) {
+          await BackgroundDownloadService.cancelPackDownload(packId);
+        }
         _emit(
             packId,
             const DownloadProgress(
@@ -203,6 +208,10 @@ class PackDownloadService {
   Future<void> cancelDownload(String packId) async {
     _cancelTokens[packId]?.cancel('User cancelled');
   }
+
+  static bool get _isMobile =>
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
 
   // ── Internals ─────────────────────────────────────────────────────────────
 
