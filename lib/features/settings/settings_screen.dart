@@ -119,8 +119,9 @@ class SettingsScreen extends ConsumerWidget {
           RadioGroup<ThemeMode>(
             groupValue: ref.read(themeModeProvider),
             onChanged: (v) {
-              if (v != null)
+              if (v != null) {
                 ref.read(themeModeProvider.notifier).setThemeMode(v);
+              }
               Navigator.pop(ctx);
             },
             child: Column(
@@ -147,8 +148,9 @@ class SettingsScreen extends ConsumerWidget {
           RadioGroup<double>(
             groupValue: ref.read(readerFontSizeProvider),
             onChanged: (v) {
-              if (v != null)
+              if (v != null) {
                 ref.read(readerFontSizeProvider.notifier).setFontSize(v);
+              }
               Navigator.pop(ctx);
             },
             child: Column(
@@ -183,8 +185,9 @@ class SettingsScreen extends ConsumerWidget {
           RadioGroup<String>(
             groupValue: ref.read(readerLanguageProvider),
             onChanged: (v) {
-              if (v != null)
+              if (v != null) {
                 ref.read(readerLanguageProvider.notifier).setLanguage(v);
+              }
               Navigator.pop(ctx);
             },
             child: Column(

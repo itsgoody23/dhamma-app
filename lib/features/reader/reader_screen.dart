@@ -169,8 +169,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               ),
               tooltip: isBookmarked ? 'Remove bookmark' : 'Bookmark',
               onPressed: () {
-                if (suttaAsync.value != null)
+                if (suttaAsync.value != null) {
                   _toggleBookmark(suttaAsync.value!);
+                }
               },
             ),
             loading: () => const SizedBox.shrink(),

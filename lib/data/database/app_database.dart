@@ -159,17 +159,26 @@ class AppDatabase extends _$AppDatabase {
   Future<void> mergePackDatabase(String packDbPath) async {
     await customStatement('ATTACH DATABASE ? AS pack', [packDbPath]);
     try {
+      // Exclude autoIncrement id to avoid primary key conflicts between packs.
       await customStatement('''
         INSERT OR IGNORE INTO main.texts
-        SELECT * FROM pack.texts
+          (uid, title, collection, nikaya, book, chapter, language,
+           translator, source, content_html, content_plain)
+        SELECT uid, title, collection, nikaya, book, chapter, language,
+               translator, source, content_html, content_plain
+        FROM pack.texts
       ''');
       await customStatement('''
         INSERT OR IGNORE INTO main.translations
-        SELECT * FROM pack.translations
+          (text_uid, language, translator, source, content_html, content_plain)
+        SELECT text_uid, language, translator, source, content_html, content_plain
+        FROM pack.translations
       ''');
       await customStatement('''
         INSERT OR IGNORE INTO main.translators
-        SELECT * FROM pack.translators
+          (name, tradition, bio, source_url)
+        SELECT name, tradition, bio, source_url
+        FROM pack.translators
       ''');
     } finally {
       await customStatement('DETACH DATABASE pack');
