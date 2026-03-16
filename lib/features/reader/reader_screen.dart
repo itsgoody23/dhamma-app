@@ -143,9 +143,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   @override
   Widget build(BuildContext context) {
     final suttaAsync = ref.watch(
-      readerSuttaProvider(
-        (widget.uid, _activeLanguage.isEmpty ? widget.language : _activeLanguage),
-      ),
+      readerSuttaProvider((
+        widget.uid,
+        _activeLanguage.isEmpty ? widget.language : _activeLanguage,
+      )),
     );
     final isBookmarkedAsync = ref.watch(readerIsBookmarkedProvider(widget.uid));
     final fontSize = ref.watch(readerFontSizeProvider);
