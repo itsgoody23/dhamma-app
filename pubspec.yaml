@@ -55,7 +55,6 @@ dependencies:
 
   # Device / storage info
   device_info_plus: ^10.1.0
-  disk_space: ^0.2.0
 
   # Background downloads
   workmanager: ^0.5.2

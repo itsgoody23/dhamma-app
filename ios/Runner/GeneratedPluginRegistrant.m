@@ -18,12 +18,6 @@
 @import device_info_plus;
 #endif
 
-#if __has_include(<disk_space/SwiftDiskSpacePlugin.h>)
-#import <disk_space/SwiftDiskSpacePlugin.h>
-#else
-@import disk_space;
-#endif
-
 #if __has_include(<integration_test/IntegrationTestPlugin.h>)
 #import <integration_test/IntegrationTestPlugin.h>
 #else
@@ -71,7 +65,6 @@
 + (void)registerWithRegistry:(NSObject<FlutterPluginRegistry>*)registry {
   [ConnectivityPlusPlugin registerWithRegistrar:[registry registrarForPlugin:@"ConnectivityPlusPlugin"]];
   [FPPDeviceInfoPlusPlugin registerWithRegistrar:[registry registrarForPlugin:@"FPPDeviceInfoPlusPlugin"]];
-  [SwiftDiskSpacePlugin registerWithRegistrar:[registry registrarForPlugin:@"SwiftDiskSpacePlugin"]];
   [IntegrationTestPlugin registerWithRegistrar:[registry registrarForPlugin:@"IntegrationTestPlugin"]];
   [FPPSharePlusPlugin registerWithRegistrar:[registry registrarForPlugin:@"FPPSharePlusPlugin"]];
   [SharedPreferencesPlugin registerWithRegistrar:[registry registrarForPlugin:@"SharedPreferencesPlugin"]];
