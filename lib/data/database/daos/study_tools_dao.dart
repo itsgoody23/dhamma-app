@@ -96,6 +96,7 @@ class StudyToolsDao extends DatabaseAccessor<AppDatabase>
     required int startOffset,
     required int endOffset,
     required String colour,
+    required String language,
   }) {
     return into(userHighlights).insert(
       UserHighlightsCompanion.insert(
@@ -103,13 +104,23 @@ class StudyToolsDao extends DatabaseAccessor<AppDatabase>
         startOffset: startOffset,
         endOffset: endOffset,
         colour: colour,
+        language: Value(language),
       ),
     );
   }
 
-  Stream<List<UserHighlight>> watchHighlightsForUid(String textUid) {
+  Stream<List<UserHighlight>> watchHighlightsForUid(
+    String textUid, {
+    String? language,
+  }) {
     return (select(userHighlights)
-          ..where((h) => h.textUid.equals(textUid) & h.isDeleted.equals(false))
+          ..where((h) {
+            var expr = h.textUid.equals(textUid) & h.isDeleted.equals(false);
+            if (language != null) {
+              expr = expr & h.language.equals(language);
+            }
+            return expr;
+          })
           ..orderBy([(h) => OrderingTerm.asc(h.startOffset)]))
         .watch();
   }
@@ -119,6 +130,25 @@ class StudyToolsDao extends DatabaseAccessor<AppDatabase>
           ..where((h) => h.isDeleted.equals(false))
           ..orderBy([(h) => OrderingTerm.desc(h.createdAt)]))
         .watch();
+  }
+
+  Stream<List<UserHighlight>> watchHighlightsWithNotes() {
+    return (select(userHighlights)
+          ..where((h) =>
+              h.isDeleted.equals(false) &
+              h.note.isNotNull() &
+              h.note.equals('').not())
+          ..orderBy([(h) => OrderingTerm.desc(h.updatedAt)]))
+        .watch();
+  }
+
+  Future<void> updateHighlightNote(int id, String note) {
+    return (update(userHighlights)..where((h) => h.id.equals(id))).write(
+      UserHighlightsCompanion(
+        note: Value(note),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
   }
 
   Future<void> deleteHighlight(int id) {

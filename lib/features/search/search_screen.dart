@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/constants/app_sizes.dart';
+import '../../core/extensions/l10n_extension.dart';
 import '../../core/routing/routes.dart';
 import '../../data/models/search_result.dart';
+import '../../core/utils/error_formatter.dart';
 import '../../shared/providers/database_provider.dart';
 import '../../shared/widgets/nikaya_badge.dart';
 
@@ -117,7 +119,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           controller: _controller,
           autofocus: false,
           decoration: InputDecoration(
-            hintText: 'Search suttas, keywords, titles…',
+            hintText: context.l10n.searchHint,
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,
@@ -161,7 +163,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
         ],
       ),
-      body: _query.isEmpty ? _SearchHistory() : _SearchResults(query: _query),
+      body: _query.isEmpty
+          ? _SearchHistory(onHistoryTapped: (query) {
+              _controller.text = query;
+              _onQueryChanged(query);
+            })
+          : _SearchResults(query: _query),
     );
   }
 
@@ -176,6 +183,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 // ── Search history ────────────────────────────────────────────────────────────
 
 class _SearchHistory extends ConsumerWidget {
+  const _SearchHistory({this.onHistoryTapped});
+
+  final ValueChanged<String>? onHistoryTapped;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(
@@ -186,23 +197,23 @@ class _SearchHistory extends ConsumerWidget {
     return historyAsync.when(
       data: (history) {
         if (history.isEmpty) {
-          return const Center(
+          return Center(
             child: Padding(
-              padding: EdgeInsets.all(32),
+              padding: const EdgeInsets.all(32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.search, size: 48, color: Colors.grey),
-                  SizedBox(height: 16),
+                  const Icon(Icons.search, size: 48, color: Colors.grey),
+                  const SizedBox(height: 16),
                   Text(
-                    'Search the Pali Canon\nby title, keyword, or phrase',
+                    context.l10n.searchEmpty,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
+                    style: const TextStyle(color: Colors.grey),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    'Tip: "satipaṭṭhāna" or "satipatthana" both work',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    context.l10n.searchTip,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ],
               ),
@@ -217,10 +228,10 @@ class _SearchHistory extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'RECENT SEARCHES',
-                      style: TextStyle(
+                      context.l10n.searchRecentSearches,
+                      style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.8),
@@ -231,7 +242,7 @@ class _SearchHistory extends ConsumerWidget {
                         .read(appDatabaseProvider)
                         .searchDao
                         .clearSearchHistory(),
-                    child: const Text('Clear', style: TextStyle(fontSize: 12)),
+                    child: Text(context.l10n.searchClear, style: const TextStyle(fontSize: 12)),
                   ),
                 ],
               ),
@@ -251,9 +262,7 @@ class _SearchHistory extends ConsumerWidget {
                           .searchDao
                           .deleteSearchTerm(item.id),
                     ),
-                    onTap: () {
-                      // TODO: populate search bar with this query
-                    },
+                    onTap: () => onHistoryTapped?.call(item.query),
                   );
                 },
               ),
@@ -267,16 +276,23 @@ class _SearchHistory extends ConsumerWidget {
   }
 }
 
-// ── Search results ────────────────────────────────────────────────────────────
+// ── Search results with pagination ───────────────────────────────────────────
 
-class _SearchResults extends ConsumerWidget {
+class _SearchResults extends ConsumerStatefulWidget {
   const _SearchResults({required this.query});
 
   final String query;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final resultsAsync = ref.watch(searchResultsProvider(query));
+  ConsumerState<_SearchResults> createState() => _SearchResultsState();
+}
+
+class _SearchResultsState extends ConsumerState<_SearchResults> {
+  static const _pageSize = 50;
+
+  @override
+  Widget build(BuildContext context) {
+    final resultsAsync = ref.watch(searchResultsProvider(widget.query));
 
     return resultsAsync.when(
       data: (results) {
@@ -290,14 +306,14 @@ class _SearchResults extends ConsumerWidget {
                   const Icon(Icons.search_off, size: 48, color: Colors.grey),
                   const SizedBox(height: 16),
                   Text(
-                    'No results for "$query"',
+                    context.l10n.searchNoResults(widget.query),
                     style: const TextStyle(color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Try a different keyword or download more packs',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  Text(
+                    context.l10n.searchTryDifferent,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -306,16 +322,81 @@ class _SearchResults extends ConsumerWidget {
           );
         }
 
+        final hasMore = results.length >= _pageSize;
+
         return ListView.separated(
           padding: const EdgeInsets.symmetric(
               horizontal: AppSizes.md, vertical: AppSizes.sm),
-          itemCount: results.length,
+          itemCount: results.length + (hasMore ? 1 : 0),
           separatorBuilder: (_, __) => const Divider(height: 1),
-          itemBuilder: (context, index) => _ResultTile(result: results[index]),
+          itemBuilder: (context, index) {
+            if (index < results.length) {
+              return _ResultTile(result: results[index]);
+            }
+            // "Load more" button
+            return _LoadMoreButton(
+              query: widget.query,
+              currentCount: results.length,
+            );
+          },
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Search error: $e')),
+      error: (e, _) => Center(child: Text(friendlyError(e))),
+    );
+  }
+}
+
+class _LoadMoreButton extends ConsumerStatefulWidget {
+  const _LoadMoreButton({required this.query, required this.currentCount});
+  final String query;
+  final int currentCount;
+
+  @override
+  ConsumerState<_LoadMoreButton> createState() => _LoadMoreButtonState();
+}
+
+class _LoadMoreButtonState extends ConsumerState<_LoadMoreButton> {
+  bool _loading = false;
+  List<SearchResult> _extra = [];
+
+  Future<void> _loadMore() async {
+    setState(() => _loading = true);
+    final filters = ref.read(searchFiltersProvider);
+    final db = ref.read(appDatabaseProvider);
+    final more = await db.searchDao.search(
+      widget.query,
+      language: filters.language,
+      nikaya: filters.nikaya,
+      translator: filters.translator,
+      offset: widget.currentCount + _extra.length,
+    );
+    setState(() {
+      _extra = [..._extra, ...more];
+      _loading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ..._extra.map((r) => _ResultTile(result: r)),
+        if (_loading)
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextButton.icon(
+              onPressed: _loadMore,
+              icon: const Icon(Icons.expand_more),
+              label: const Text('Load more'),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -416,21 +497,21 @@ class _FilterSheet extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Filter Results',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+              Text(context.l10n.searchFilterResults,
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
               if (filters.hasFilters)
                 TextButton(
                   onPressed: () {
                     notifier.clear();
                     Navigator.pop(context);
                   },
-                  child: const Text('Clear all'),
+                  child: Text(context.l10n.searchClearAll),
                 ),
             ],
           ),
           const SizedBox(height: AppSizes.md),
-          const Text('Nikāya',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          Text(context.l10n.searchNikaya,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
           const SizedBox(height: AppSizes.sm),
           Wrap(
             spacing: AppSizes.sm,
@@ -444,8 +525,8 @@ class _FilterSheet extends ConsumerWidget {
                 .toList(),
           ),
           const SizedBox(height: AppSizes.md),
-          const Text('Language',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          Text(context.l10n.searchLanguage,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
           const SizedBox(height: AppSizes.sm),
           Wrap(
             spacing: AppSizes.sm,
@@ -463,7 +544,7 @@ class _FilterSheet extends ConsumerWidget {
             width: double.infinity,
             child: FilledButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Apply'),
+              child: Text(context.l10n.searchApply),
             ),
           ),
           const SizedBox(height: AppSizes.sm),

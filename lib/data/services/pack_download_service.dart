@@ -104,20 +104,63 @@ class PackDownloadService {
       final cancelToken = CancelToken();
       _storeCancelToken(packId, cancelToken);
 
-      await _dio.download(
-        pack.downloadUrl,
-        gzPath,
-        cancelToken: cancelToken,
-        onReceiveProgress: (received, total) {
-          _emit(
-              packId,
-              DownloadProgress(
-                state: DownloadState.downloading,
-                received: received,
-                total: total,
-              ));
-        },
-      );
+      // ── Retry loop with exponential backoff ─────────────────────────────
+      const maxAttempts = 3;
+      const retryDelays = [Duration(seconds: 2), Duration(seconds: 4), Duration(seconds: 8)];
+      final retryableTypes = {
+        DioExceptionType.connectionError,
+        DioExceptionType.connectionTimeout,
+        DioExceptionType.receiveTimeout,
+        DioExceptionType.sendTimeout,
+      };
+
+      for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+        // Check for resume: if a partial file exists, send a Range header.
+        final partialFile = File(gzPath);
+        final existingSize =
+            await partialFile.exists() ? await partialFile.length() : 0;
+        final options = existingSize > 0
+            ? Options(headers: {'Range': 'bytes=$existingSize-'})
+            : null;
+
+        if (existingSize > 0) {
+          debugPrint(
+              '[PackDownload] Resuming $packId from byte $existingSize (attempt $attempt)');
+        }
+
+        try {
+          await _dio.download(
+            pack.downloadUrl,
+            gzPath,
+            cancelToken: cancelToken,
+            options: options,
+            deleteOnError: false, // keep partial file for resume
+            onReceiveProgress: (received, total) {
+              _emit(
+                  packId,
+                  DownloadProgress(
+                    state: DownloadState.downloading,
+                    // Offset received/total by bytes already on disk so the
+                    // progress bar reflects the full file, not just this chunk.
+                    received: existingSize + received,
+                    total: total > 0 ? existingSize + total : 0,
+                  ));
+            },
+          );
+          break; // success — exit the retry loop
+        } on DioException catch (e) {
+          if (e.type == DioExceptionType.cancel) {
+            rethrow; // bubble up so the outer catch handles cancellation
+          }
+          if (!retryableTypes.contains(e.type) || attempt == maxAttempts) {
+            rethrow; // not retryable, or exhausted attempts
+          }
+          final delay = retryDelays[attempt - 1];
+          debugPrint(
+              '[PackDownload] Attempt $attempt failed (${e.type}); retrying in ${delay.inSeconds}s…');
+          await Future<void>.delayed(delay);
+        }
+      }
 
       // ── Verify checksum ─────────────────────────────────────────────────
       final gzFile = File(gzPath);
@@ -171,6 +214,9 @@ class PackDownloadService {
             packId,
             const DownloadProgress(
                 state: DownloadState.cancelled, received: 0, total: 0));
+        // On explicit cancellation, remove the partial file so a future
+        // download starts fresh (user chose to abandon this download).
+        await _cleanup(gzPath, dbPath);
       } else {
         _emit(
             packId,
@@ -180,8 +226,10 @@ class PackDownloadService {
               total: 0,
               error: e.message,
             ));
+        // Do NOT clean up gzPath — keep the partial file so the next
+        // downloadPack call can resume from where it left off.
+        await _cleanupDbOnly(dbPath);
       }
-      await _cleanup(gzPath, dbPath);
     } catch (e) {
       _emit(
           packId,
@@ -191,9 +239,13 @@ class PackDownloadService {
             total: 0,
             error: e.toString(),
           ));
+      // Non-network errors (e.g. checksum mismatch) — full cleanup.
       await _cleanup(gzPath, dbPath);
     } finally {
       _removeCancelToken(packId);
+      // Close and remove the stream controller so it doesn't leak.
+      _progressControllers[packId]?.close();
+      _progressControllers.remove(packId);
     }
   }
 
@@ -243,6 +295,13 @@ class PackDownloadService {
       final f = File(path);
       if (await f.exists()) await f.delete();
     }
+  }
+
+  /// Removes only the decompressed DB temp file; leaves the .gz partial file
+  /// intact so a subsequent download attempt can resume it.
+  Future<void> _cleanupDbOnly(String dbPath) async {
+    final f = File(dbPath);
+    if (await f.exists()) await f.delete();
   }
 
   void dispose() {

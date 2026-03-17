@@ -3,6 +3,8 @@
     "id": "dhammapada_30",
     "title": "30-Day Dhammapada",
     "description": "Work through the Dhammapada one chapter per day — a beautiful introduction to the Dhamma",
+    "category": "classics",
+    "difficulty": "beginner",
     "days": [
       {"day": 1,  "uid": "dhp1-20",   "title": "Chapter I: The Pairs",          "description": "Mind is the forerunner of all actions."},
       {"day": 2,  "uid": "dhp21-32",  "title": "Chapter II: Heedfulness",       "description": "Heedfulness is the path to the deathless."},
@@ -40,6 +42,8 @@
     "id": "mn_intro",
     "title": "Introduction to the MN",
     "description": "10 key suttas from the Majjhima Nikāya — perfect for a first exploration",
+    "category": "classics",
+    "difficulty": "intermediate",
     "days": [
       {"day": 1,  "uid": "mn1",   "title": "The Root of All Things"},
       {"day": 2,  "uid": "mn2",   "title": "All the Taints"},
@@ -51,6 +55,89 @@
       {"day": 8,  "uid": "mn95",  "title": "To Caṅkī"},
       {"day": 9,  "uid": "mn118", "title": "Mindfulness of Breathing"},
       {"day": 10, "uid": "mn131", "title": "One Fine Night"}
+    ]
+  },
+  {
+    "id": "noble_truths_7",
+    "title": "7-Day Noble Truths",
+    "description": "Explore the Four Noble Truths through the Buddha's own words — from the first discourse to the path of practice",
+    "category": "doctrinal",
+    "difficulty": "beginner",
+    "days": [
+      {"day": 1, "uid": "sn56.11",  "title": "Setting the Wheel of Dhamma",    "description": "The first discourse — the Four Noble Truths and the Middle Way."},
+      {"day": 2, "uid": "mn141",    "title": "The Analysis of the Truths",      "description": "Venerable Sāriputta explains each truth in detail."},
+      {"day": 3, "uid": "sn22.59",  "title": "The Not-Self Characteristic",     "description": "The second discourse — the five aggregates are not self."},
+      {"day": 4, "uid": "dn22",     "title": "The Great Discourse on Foundations of Mindfulness", "description": "The comprehensive guide to the four foundations of mindfulness."},
+      {"day": 5, "uid": "mn10",     "title": "The Foundations of Mindfulness",   "description": "The direct path for the purification of beings."},
+      {"day": 6, "uid": "an4.159",  "title": "Lovingkindness",                  "description": "The boundless heart — the practice of mettā."},
+      {"day": 7, "uid": "sn45.8",   "title": "Analysis of the Path",            "description": "The Noble Eightfold Path explained factor by factor."}
+    ]
+  },
+  {
+    "id": "sn_sampler_14",
+    "title": "14-Day Saṁyutta Nikāya Sampler",
+    "description": "A fortnight journey through the Connected Discourses — thematically grouped suttas on key Buddhist teachings",
+    "category": "nikaya_study",
+    "difficulty": "intermediate",
+    "days": [
+      {"day": 1,  "uid": "sn12.2",   "title": "Analysis of Dependent Origination", "description": "The twelve links of dependent arising explained."},
+      {"day": 2,  "uid": "sn12.15",  "title": "Kaccānagotta",                    "description": "Right view and the middle way between existence and non-existence."},
+      {"day": 3,  "uid": "sn22.59",  "title": "The Not-Self Characteristic",     "description": "The five aggregates — form, feeling, perception, formations, consciousness."},
+      {"day": 4,  "uid": "sn22.86",  "title": "Anurādha",                        "description": "The Tathāgata cannot be described after death."},
+      {"day": 5,  "uid": "sn35.28",  "title": "The Fire Sermon",                 "description": "Everything is burning — the six sense bases on fire."},
+      {"day": 6,  "uid": "sn35.85",  "title": "The World Is Empty",              "description": "Empty of a self or anything belonging to a self."},
+      {"day": 7,  "uid": "sn36.6",   "title": "The Dart",                        "description": "An untrained person feels two pains; the trained, only one."},
+      {"day": 8,  "uid": "sn45.8",   "title": "Analysis of the Path",            "description": "The Noble Eightfold Path factor by factor."},
+      {"day": 9,  "uid": "sn46.53",  "title": "Fire",                            "description": "Which awakening factor to develop for which mental state."},
+      {"day": 10, "uid": "sn47.19",  "title": "Sedaka",                          "description": "The acrobat simile — protecting oneself, one protects others."},
+      {"day": 11, "uid": "sn54.13",  "title": "Ānanda on Breathing",             "description": "Mindfulness of breathing fulfills the four foundations of mindfulness."},
+      {"day": 12, "uid": "sn56.11",  "title": "Setting the Wheel of Dhamma",     "description": "The first discourse of the Buddha."},
+      {"day": 13, "uid": "sn56.31",  "title": "The Siṁsapā Grove",              "description": "What the Buddha taught is like a handful of leaves."},
+      {"day": 14, "uid": "sn1.1",    "title": "Crossing the Flood",              "description": "How the Buddha crossed the flood — neither standing still nor swimming."}
+    ]
+  },
+  {
+    "id": "metta_5",
+    "title": "5-Day Loving-Kindness",
+    "description": "A short retreat through the suttas on mettā, karuṇā, and the boundless heart",
+    "category": "meditation",
+    "difficulty": "beginner",
+    "days": [
+      {"day": 1, "uid": "an4.159",  "title": "Lovingkindness",              "description": "The four divine abidings — mettā, karuṇā, muditā, upekkhā."},
+      {"day": 2, "uid": "snp1.8",   "title": "Karaṇīya Mettā Sutta",       "description": "The Buddha's most beloved teaching on universal lovingkindness."},
+      {"day": 3, "uid": "an11.15",  "title": "Subha — Mettā's Benefits",    "description": "Eleven benefits of cultivating lovingkindness."},
+      {"day": 4, "uid": "mn21",     "title": "The Simile of the Saw",       "description": "Even if bandits cut you limb from limb, you should train in goodwill."},
+      {"day": 5, "uid": "an8.1",    "title": "Mettā Mindfulness",           "description": "When lovingkindness is developed, great fruit and benefit are to be expected."}
+    ]
+  },
+  {
+    "id": "an_journey_21",
+    "title": "21-Day Aṅguttara Nikāya Journey",
+    "description": "Three weeks exploring the Numbered Discourses — practical teachings organized from ones to elevens",
+    "category": "nikaya_study",
+    "difficulty": "intermediate",
+    "days": [
+      {"day": 1,  "uid": "an1.1-10",  "title": "The Mind — Ones",                "description": "The luminous mind, defiled by adventitious defilements."},
+      {"day": 2,  "uid": "an2.118-129","title": "Effort & Striving — Twos",       "description": "Two things that lead to decline or progress."},
+      {"day": 3,  "uid": "an3.65",     "title": "To the Kālāmas — Threes",        "description": "Don't go by tradition alone — test the teachings for yourself."},
+      {"day": 4,  "uid": "an3.69",     "title": "Sources of Merit — Threes",      "description": "Three bases of meritorious activity."},
+      {"day": 5,  "uid": "an4.159",    "title": "Lovingkindness — Fours",         "description": "The four divine abidings pervading the world."},
+      {"day": 6,  "uid": "an4.170",    "title": "In Tandem — Fours",              "description": "Meaning and phrasing in the teachings."},
+      {"day": 7,  "uid": "an5.57",     "title": "Themes for Reflection — Fives",  "description": "I am subject to aging, illness, death, separation, and karma."},
+      {"day": 8,  "uid": "an5.28",     "title": "Five Factors — Fives",           "description": "Five qualities leading to concentration."},
+      {"day": 9,  "uid": "an6.19",     "title": "Mindfulness of Death — Sixes",   "description": "Six ways to develop mindfulness of death."},
+      {"day": 10, "uid": "an6.63",     "title": "Penetrative — Sixes",            "description": "Six things to be penetrated and known."},
+      {"day": 11, "uid": "an7.64",     "title": "Angry Thoughts — Sevens",        "description": "Seven ways to remove annoying thoughts."},
+      {"day": 12, "uid": "an7.6",      "title": "Wealth — Sevens",                "description": "The seven treasures of a noble person."},
+      {"day": 13, "uid": "an8.1",      "title": "Mettā — Eights",                 "description": "Eight benefits of developing mettā."},
+      {"day": 14, "uid": "an8.39",     "title": "Streams of Merit — Eights",      "description": "Eight streams of merit and wholesomeness."},
+      {"day": 15, "uid": "an8.54",     "title": "Dīghajāṇu — Eights",            "description": "Conditions for happiness in this life and the next."},
+      {"day": 16, "uid": "an9.20",     "title": "Velāma — Nines",                 "description": "The relative merit of different kinds of giving."},
+      {"day": 17, "uid": "an10.60",    "title": "Girimānanda — Tens",             "description": "Ten perceptions that lead to the ending of taints."},
+      {"day": 18, "uid": "an10.61",    "title": "Ignorance — Tens",               "description": "How ignorance starts the chain and knowledge ends it."},
+      {"day": 19, "uid": "an10.176",   "title": "Cunda the Silversmith — Tens",   "description": "Ten courses of wholesome action."},
+      {"day": 20, "uid": "an11.15",    "title": "Subha — Elevens",                "description": "Eleven benefits of cultivating lovingkindness."},
+      {"day": 21, "uid": "an3.65",     "title": "Review: To the Kālāmas",         "description": "Come, test the teachings once more with fresh eyes."}
     ]
   }
 ]

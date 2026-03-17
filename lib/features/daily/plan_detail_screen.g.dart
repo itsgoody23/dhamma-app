@@ -160,3 +160,87 @@ final class PlanProgressFamily extends $Family
   @override
   String toString() => r'planProgressProvider';
 }
+
+/// Checks which plan UIDs have downloaded text available.
+
+@ProviderFor(planAvailability)
+final planAvailabilityProvider = PlanAvailabilityFamily._();
+
+/// Checks which plan UIDs have downloaded text available.
+
+final class PlanAvailabilityProvider extends $FunctionalProvider<
+        AsyncValue<Set<String>>, Set<String>, FutureOr<Set<String>>>
+    with $FutureModifier<Set<String>>, $FutureProvider<Set<String>> {
+  /// Checks which plan UIDs have downloaded text available.
+  PlanAvailabilityProvider._(
+      {required PlanAvailabilityFamily super.from,
+      required String super.argument})
+      : super(
+          retry: null,
+          name: r'planAvailabilityProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$planAvailabilityHash();
+
+  @override
+  String toString() {
+    return r'planAvailabilityProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Set<String>> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Set<String>> create(Ref ref) {
+    final argument = this.argument as String;
+    return planAvailability(
+      ref,
+      argument,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PlanAvailabilityProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$planAvailabilityHash() => r'a721c4c16bfccf4da6ed0f2ea209b74d0ed4b889';
+
+/// Checks which plan UIDs have downloaded text available.
+
+final class PlanAvailabilityFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Set<String>>, String> {
+  PlanAvailabilityFamily._()
+      : super(
+          retry: null,
+          name: r'planAvailabilityProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  /// Checks which plan UIDs have downloaded text available.
+
+  PlanAvailabilityProvider call(
+    String planId,
+  ) =>
+      PlanAvailabilityProvider._(argument: planId, from: this);
+
+  @override
+  String toString() => r'planAvailabilityProvider';
+}

@@ -13,3 +13,18 @@ class VideoCache extends Table {
   DateTimeColumn get cachedAt =>
       dateTime().named('cached_at').withDefault(currentDateAndTime)();
 }
+
+class TeacherChannels extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  TextColumn get channelId => text().named('channel_id').unique()();
+  TextColumn get platform =>
+      text().withDefault(const Constant('youtube'))();
+  TextColumn get thumbnailUrl => text().named('thumbnail_url').nullable()();
+  BoolColumn get isDefault =>
+      boolean().named('is_default').withDefault(const Constant(false))();
+  DateTimeColumn get addedAt =>
+      dateTime().named('added_at').withDefault(currentDateAndTime)();
+  IntColumn get sortOrder =>
+      integer().named('sort_order').withDefault(const Constant(0))();
+}

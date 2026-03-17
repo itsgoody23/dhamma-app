@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
+import '../../core/extensions/l10n_extension.dart';
 import '../../core/routing/routes.dart';
 import '../../data/models/content_pack.dart';
 import '../downloads/downloads_screen.dart';
@@ -23,15 +27,31 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   ContentPack? _selectedPack;
   bool _downloading = false;
   double _downloadFraction = 0;
+  StreamSubscription<dynamic>? _downloadSubscription;
+
+  static const _supportedLanguageCodes = {'en', 'pli', 'de', 'fr', 'es', 'si'};
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-detect device locale → pre-select matching content language
+    final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
+    final code = deviceLocale.languageCode;
+    if (_supportedLanguageCodes.contains(code)) {
+      _selectedLanguage = code;
+    }
+  }
 
   @override
   void dispose() {
+    _downloadSubscription?.cancel();
     _pageController.dispose();
     super.dispose();
   }
 
   void _next() {
     if (_page < 4) {
+      HapticFeedback.lightImpact();
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -39,6 +59,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       setState(() => _page++);
     } else {
       _finish();
+    }
+  }
+
+  void _back() {
+    if (_page > 0) {
+      HapticFeedback.lightImpact();
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      setState(() => _page--);
     }
   }
 
@@ -57,17 +88,37 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
     setState(() => _downloading = true);
 
-    final service = ref.read(packDownloadServiceProvider);
-    service.progressStream(_selectedPack!.packId).listen((p) {
-      if (mounted) {
-        setState(() => _downloadFraction = p.fraction);
-        if (p.isDone) {
-          _next();
-        }
-      }
-    });
+    try {
+      final service = ref.read(packDownloadServiceProvider);
+      _downloadSubscription =
+          service.progressStream(_selectedPack!.packId).listen(
+        (p) {
+          if (mounted) {
+            setState(() => _downloadFraction = p.fraction);
+            if (p.isDone) {
+              _next();
+            }
+          }
+        },
+        onError: (Object e) {
+          if (mounted) {
+            setState(() => _downloading = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Download failed: $e')),
+            );
+          }
+        },
+      );
 
-    await service.downloadPack(_selectedPack!, wifiOnly: false);
+      await service.downloadPack(_selectedPack!, wifiOnly: false);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _downloading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Download failed: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -76,13 +127,28 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Progress dots
+            // Back button + Progress dots
             Padding(
               padding: const EdgeInsets.all(AppSizes.md),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children:
-                    List.generate(5, (index) => _Dot(active: index == _page)),
+                children: [
+                  if (_page > 0)
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: _back,
+                      tooltip: 'Back',
+                    )
+                  else
+                    const SizedBox(width: 48),
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                          5, (index) => _Dot(active: index == _page)),
+                    ),
+                  ),
+                  const SizedBox(width: 48),
+                ],
               ),
             ),
             Expanded(
@@ -165,22 +231,22 @@ class _WelcomePage extends StatelessWidget {
             child: const Icon(Icons.spa, size: 52, color: AppColors.green),
           ),
           const SizedBox(height: AppSizes.xl),
-          const Text(
-            'Dhamma App',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
+          Text(
+            context.l10n.onboardingHeading,
+            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSizes.sm),
-          const Text(
-            'The Pali Canon, in your pocket.\nFree, forever.',
-            style: TextStyle(fontSize: 18, color: Colors.grey, height: 1.5),
+          Text(
+            context.l10n.onboardingSubtitle,
+            style: const TextStyle(fontSize: 18, color: Colors.grey, height: 1.5),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSizes.xxl),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-                onPressed: onNext, child: const Text('Get started')),
+                onPressed: onNext, child: Text(context.l10n.onboardingGetStarted)),
           ),
         ],
       ),
@@ -209,6 +275,7 @@ class _LanguagePage extends StatelessWidget {
     ('de', 'Deutsch'),
     ('fr', 'Français'),
     ('es', 'Español'),
+    ('si', 'සිංහල'),
   ];
 
   @override
@@ -218,11 +285,11 @@ class _LanguagePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Choose your language',
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
+          Text(context.l10n.onboardingChooseLanguage,
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
           const SizedBox(height: AppSizes.sm),
-          const Text('You can change this later in Settings',
-              style: TextStyle(color: Colors.grey)),
+          Text(context.l10n.onboardingChangeLanguageLater,
+              style: const TextStyle(color: Colors.grey)),
           const SizedBox(height: AppSizes.lg),
           Wrap(
             spacing: AppSizes.sm,
@@ -239,12 +306,12 @@ class _LanguagePage extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child:
-                FilledButton(onPressed: onNext, child: const Text('Continue')),
+                FilledButton(onPressed: onNext, child: Text(context.l10n.onboardingContinue)),
           ),
           const SizedBox(height: AppSizes.sm),
           Center(
               child: TextButton(
-                  onPressed: onSkip, child: const Text('Skip for now'))),
+                  onPressed: onSkip, child: Text(context.l10n.onboardingSkipForNow))),
         ],
       ),
     );
@@ -281,12 +348,12 @@ class _DownloadPage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Download your first pack',
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
+          Text(context.l10n.onboardingDownloadFirst,
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
           const SizedBox(height: AppSizes.sm),
-          const Text(
-              'Start with the Middle-Length Discourses — a great introduction to the Dhamma',
-              style: TextStyle(color: Colors.grey, height: 1.5)),
+          Text(
+              context.l10n.onboardingDownloadHint,
+              style: const TextStyle(color: Colors.grey, height: 1.5)),
           const SizedBox(height: AppSizes.lg),
           Expanded(
             child: packsAsync.when(
@@ -315,8 +382,7 @@ class _DownloadPage extends ConsumerWidget {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const Text(
-                  'Could not load pack list. You can download packs later.'),
+              error: (_, __) => Text(context.l10n.onboardingDownloadError),
             ),
           ),
           if (downloading) ...[
@@ -329,8 +395,8 @@ class _DownloadPage extends ConsumerWidget {
             const SizedBox(height: 4),
             Text(
               fraction < 1
-                  ? 'Downloading… ${(fraction * 100).round()}%'
-                  : 'Installing…',
+                  ? context.l10n.onboardingDownloading((fraction * 100).round())
+                  : context.l10n.onboardingInstalling,
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
@@ -339,13 +405,13 @@ class _DownloadPage extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                  onPressed: onDownload, child: const Text('Download')),
+                  onPressed: onDownload, child: Text(context.l10n.onboardingDownload)),
             ),
             const SizedBox(height: AppSizes.sm),
             Center(
                 child: TextButton(
                     onPressed: onSkip,
-                    child: const Text('Skip — download later'))),
+                    child: Text(context.l10n.onboardingSkipDownload))),
           ],
         ],
       ),
@@ -367,32 +433,30 @@ class _HowToPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('How to navigate',
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
+          Text(context.l10n.onboardingHowToNavigate,
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
           const SizedBox(height: AppSizes.lg),
-          const _NavTip(
+          _NavTip(
             icon: Icons.menu_book_outlined,
-            title: 'Library',
-            body:
-                'Browse the Pali Canon by Nikāya — from the Dīgha to the Khuddaka.',
+            title: context.l10n.onboardingNavLibrary,
+            body: context.l10n.onboardingNavLibraryDesc,
           ),
           const SizedBox(height: AppSizes.md),
-          const _NavTip(
+          _NavTip(
             icon: Icons.search_outlined,
-            title: 'Search',
-            body:
-                'Find any sutta by keyword, title, or phrase — even with or without diacritics.',
+            title: context.l10n.onboardingNavSearch,
+            body: context.l10n.onboardingNavSearchDesc,
           ),
           const SizedBox(height: AppSizes.md),
-          const _NavTip(
+          _NavTip(
             icon: Icons.wb_sunny_outlined,
-            title: 'Daily',
-            body: 'A different sutta every day, plus structured reading plans.',
+            title: context.l10n.onboardingNavDaily,
+            body: context.l10n.onboardingNavDailyDesc,
           ),
           const Spacer(),
           SizedBox(
             width: double.infinity,
-            child: FilledButton(onPressed: onNext, child: const Text('Got it')),
+            child: FilledButton(onPressed: onNext, child: Text(context.l10n.onboardingGotIt)),
           ),
         ],
       ),
@@ -455,15 +519,15 @@ class _DonePage extends StatelessWidget {
         children: [
           const Icon(Icons.favorite, size: 72, color: AppColors.green),
           const SizedBox(height: AppSizes.xl),
-          const Text(
-            'You\'re ready',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
+          Text(
+            context.l10n.onboardingReady,
+            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSizes.sm),
-          const Text(
-            'May your study be a source of wisdom\nand liberation.',
-            style: TextStyle(fontSize: 16, color: Colors.grey, height: 1.6),
+          Text(
+            context.l10n.onboardingReadySubtitle,
+            style: const TextStyle(fontSize: 16, color: Colors.grey, height: 1.6),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSizes.xxl),
@@ -471,7 +535,7 @@ class _DonePage extends StatelessWidget {
             width: double.infinity,
             child: FilledButton(
               onPressed: onStart,
-              child: const Text('Start reading'),
+              child: Text(context.l10n.onboardingStartReading),
             ),
           ),
         ],

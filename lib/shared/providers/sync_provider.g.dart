@@ -159,3 +159,115 @@ abstract class _$LastSyncTimeNotifier extends $Notifier<DateTime?> {
     element.handleCreate(ref, build);
   }
 }
+
+/// Errors from the last sync, keyed by table name.
+
+@ProviderFor(SyncErrorsNotifier)
+final syncErrorsProvider = SyncErrorsNotifierProvider._();
+
+/// Errors from the last sync, keyed by table name.
+final class SyncErrorsNotifierProvider
+    extends $NotifierProvider<SyncErrorsNotifier, Map<String, String>> {
+  /// Errors from the last sync, keyed by table name.
+  SyncErrorsNotifierProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'syncErrorsProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$syncErrorsNotifierHash();
+
+  @$internal
+  @override
+  SyncErrorsNotifier create() => SyncErrorsNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<String, String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Map<String, String>>(value),
+    );
+  }
+}
+
+String _$syncErrorsNotifierHash() =>
+    r'204be9fff17b7e240a9aeed8f7902586ec847a0b';
+
+/// Errors from the last sync, keyed by table name.
+
+abstract class _$SyncErrorsNotifier extends $Notifier<Map<String, String>> {
+  Map<String, String> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<Map<String, String>, Map<String, String>>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<Map<String, String>, Map<String, String>>,
+        Map<String, String>,
+        Object?,
+        Object?>;
+    element.handleCreate(ref, build);
+  }
+}
+
+/// Auto-sync timer that runs every 15 minutes when user is signed in.
+/// Respects Wi-Fi-only preference on mobile data.
+
+@ProviderFor(AutoSyncTimer)
+final autoSyncTimerProvider = AutoSyncTimerProvider._();
+
+/// Auto-sync timer that runs every 15 minutes when user is signed in.
+/// Respects Wi-Fi-only preference on mobile data.
+final class AutoSyncTimerProvider
+    extends $NotifierProvider<AutoSyncTimer, bool> {
+  /// Auto-sync timer that runs every 15 minutes when user is signed in.
+  /// Respects Wi-Fi-only preference on mobile data.
+  AutoSyncTimerProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'autoSyncTimerProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$autoSyncTimerHash();
+
+  @$internal
+  @override
+  AutoSyncTimer create() => AutoSyncTimer();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$autoSyncTimerHash() => r'8bc54e9d742d6946023c168a46ce5dc40b04ff60';
+
+/// Auto-sync timer that runs every 15 minutes when user is signed in.
+/// Respects Wi-Fi-only preference on mobile data.
+
+abstract class _$AutoSyncTimer extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<bool, bool>, bool, Object?, Object?>;
+    element.handleCreate(ref, build);
+  }
+}

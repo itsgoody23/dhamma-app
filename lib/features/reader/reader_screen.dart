@@ -1,12 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../data/services/share_service.dart';
 
+import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/routing/routes.dart';
+import '../../core/utils/error_formatter.dart';
+import '../../core/utils/uid_utils.dart';
 import '../../data/database/app_database.dart';
 import '../../data/services/pdf_export_service.dart';
 import '../../shared/providers/database_provider.dart';
@@ -14,21 +19,73 @@ import '../../shared/providers/preferences_provider.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_shimmer.dart';
 import '../../shared/widgets/translator_attribution.dart';
+import 'utils/html_parser.dart';
+import 'widgets/highlight_toolbar.dart';
+import 'widgets/highlighted_text.dart';
+import 'widgets/note_sheet.dart';
+import 'widgets/paginated_reader_view.dart';
+import 'widgets/split_reader_view.dart';
+import '../collections/add_to_collection_sheet.dart';
+import 'widgets/my_translation_view.dart';
+import 'widgets/commentary_view.dart';
+import 'widgets/dictionary_popup.dart';
+import '../../data/services/community_service.dart';
+import 'widgets/community_highlights.dart';
+import '../../core/extensions/l10n_extension.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
 final readerSuttaProvider = FutureProvider.autoDispose
     .family<SuttaText?, (String, String)>((ref, args) async {
   final db = ref.watch(appDatabaseProvider);
-  var sutta = await db.textsDao.getSuttaByUid(args.$1, args.$2);
-  sutta ??= await db.textsDao.getSuttaByUidAnyLanguage(args.$1);
+  final uid = args.$1;
+  final lang = args.$2;
+
+  // Handle range UIDs like 'dhp1-20' by fetching all verses and merging.
+  if (isRangeUid(uid)) {
+    final expanded = expandRangeUid(uid);
+    var verses = await db.textsDao.getSuttasByUidList(expanded, lang);
+    if (verses.isEmpty) {
+      // Try any language as fallback.
+      verses = await db.textsDao.getSuttasByUidList(expanded, 'en');
+    }
+    if (verses.isEmpty) return null;
+    // Merge into a single virtual SuttaText.
+    final first = verses.first;
+    final mergedHtml = verses
+        .map((v) => v.contentHtml ?? '')
+        .where((h) => h.isNotEmpty)
+        .join('\n');
+    final mergedPlain = verses
+        .map((v) => v.contentPlain ?? '')
+        .where((p) => p.isNotEmpty)
+        .join('\n\n');
+    return SuttaText(
+      id: first.id,
+      uid: uid,
+      title: first.title,
+      collection: first.collection,
+      nikaya: first.nikaya,
+      book: first.book,
+      chapter: first.chapter,
+      language: first.language,
+      translator: first.translator,
+      source: first.source,
+      contentHtml: mergedHtml.isNotEmpty ? mergedHtml : null,
+      contentPlain: mergedPlain.isNotEmpty ? mergedPlain : null,
+      textType: 'root',
+    );
+  }
+
+  var sutta = await db.textsDao.getSuttaByUid(uid, lang);
+  sutta ??= await db.textsDao.getSuttaByUidAnyLanguage(uid);
   return sutta;
 });
 
-final readerHighlightsProvider =
-    StreamProvider.autoDispose.family<List<UserHighlight>, String>((ref, uid) {
+final readerHighlightsProvider = StreamProvider.autoDispose
+    .family<List<UserHighlight>, (String, String)>((ref, args) {
   final db = ref.watch(appDatabaseProvider);
-  return db.studyToolsDao.watchHighlightsForUid(uid);
+  return db.studyToolsDao.watchHighlightsForUid(args.$1, language: args.$2);
 });
 
 final readerIsBookmarkedProvider =
@@ -43,6 +100,24 @@ final readerAvailableLanguagesProvider =
   return db.textsDao.getLanguagesForUid(uid);
 });
 
+final readerNoteProvider =
+    StreamProvider.autoDispose.family<UserNote?, String>((ref, uid) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.studyToolsDao.watchNoteForUid(uid);
+});
+
+final readerPaliSuttaProvider =
+    FutureProvider.autoDispose.family<SuttaText?, String>((ref, uid) async {
+  final db = ref.watch(appDatabaseProvider);
+  return db.textsDao.getSuttaByUid(uid, 'pli');
+});
+
+final readerAdjacentProvider = FutureProvider.autoDispose
+    .family<(String?, String?), (String, String)>((ref, args) async {
+  final db = ref.watch(appDatabaseProvider);
+  return db.textsDao.getAdjacentUids(args.$1, args.$2);
+});
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 class ReaderScreen extends ConsumerStatefulWidget {
@@ -50,10 +125,12 @@ class ReaderScreen extends ConsumerStatefulWidget {
     super.key,
     required this.uid,
     required this.language,
+    this.scrollTo,
   });
 
   final String uid;
   final String language;
+  final int? scrollTo;
 
   @override
   ConsumerState<ReaderScreen> createState() => _ReaderScreenState();
@@ -61,8 +138,23 @@ class ReaderScreen extends ConsumerStatefulWidget {
 
 class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   final ScrollController _scrollController = ScrollController();
+  final _paginatedKey = GlobalKey<PaginatedReaderViewState>();
+  final _splitKey = GlobalKey<SplitReaderViewState>();
+  final _keyboardFocusNode = FocusNode();
   Timer? _progressDebounce;
   String _activeLanguage = '';
+  bool _isSplitView = false;
+  bool _showCommentary = false;
+  bool _showMyTranslation = false;
+  TextSelection? _currentSelection;
+  String _selectionLanguage = '';
+  OverlayEntry? _toolbarOverlay;
+  int _currentPage = 0;
+  int _totalPages = 0;
+  int _restoredPage = 0;
+  bool _didJumpToScrollTo = false;
+  String _currentReadableText = '';
+  bool _showCommunityHighlights = false;
 
   @override
   void initState() {
@@ -74,8 +166,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   @override
   void dispose() {
+    _removeToolbarOverlay();
     _progressDebounce?.cancel();
     _scrollController.dispose();
+    _keyboardFocusNode.dispose();
     super.dispose();
   }
 
@@ -83,16 +177,23 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final db = ref.read(appDatabaseProvider);
     final progress = await db.progressDao.getProgressForUid(widget.uid);
     if (progress != null && progress.lastPosition > 0 && mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) {
-          _scrollController.jumpTo(
-            progress.lastPosition.toDouble().clamp(
-                  0,
-                  _scrollController.position.maxScrollExtent,
-                ),
-          );
-        }
-      });
+      // For paginated mode, lastPosition stores the page number (negative
+      // values encode pages: -1 = page 0, -2 = page 1, etc.)
+      // For scroll mode, it stores pixel offset (always >= 0).
+      if (progress.lastPosition < 0) {
+        _restoredPage = -(progress.lastPosition + 1);
+      } else {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.jumpTo(
+              progress.lastPosition.toDouble().clamp(
+                    0,
+                    _scrollController.position.maxScrollExtent,
+                  ),
+            );
+          }
+        });
+      }
     }
   }
 
@@ -122,7 +223,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not export PDF: $e')),
+          SnackBar(content: Text('Could not export PDF: ${friendlyError(e)}')),
         );
       }
     }
@@ -134,22 +235,267 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not share: $e')),
+          SnackBar(content: Text('Could not share: ${friendlyError(e)}')),
         );
       }
     }
   }
 
+  // ── Highlighting ──────────────────────────────────────────────────────────
+
+  void _onSelectionChanged(
+    TextSelection selection,
+    SelectionChangedCause? cause, [
+    String? language,
+  ]) {
+    final lang = language ?? _activeLanguage;
+    if (selection.isCollapsed) {
+      _removeToolbarOverlay();
+      setState(() => _currentSelection = null);
+      return;
+    }
+    setState(() {
+      _currentSelection = selection;
+      _selectionLanguage = lang;
+    });
+    _showToolbarOverlay();
+  }
+
+  void _showToolbarOverlay() {
+    _removeToolbarOverlay();
+    final overlay = Overlay.of(context);
+    final overlapsHighlight = _selectionOverlapsHighlight();
+    _toolbarOverlay = OverlayEntry(
+      builder: (ctx) => Positioned(
+        top: MediaQuery.of(ctx).padding.top + kToolbarHeight + 60,
+        left: 0,
+        right: 0,
+        child: Center(
+          child: HighlightToolbar(
+            onColorSelected: _onHighlightColor,
+            showDelete: overlapsHighlight,
+            showNote: overlapsHighlight,
+            onDelete: _onDeleteOverlappingHighlights,
+            onNoteRequested: _onNoteRequested,
+            onDictionaryRequested: _onDictionaryRequested,
+          ),
+        ),
+      ),
+    );
+    overlay.insert(_toolbarOverlay!);
+  }
+
+  void _removeToolbarOverlay() {
+    _toolbarOverlay?.remove();
+    _toolbarOverlay = null;
+  }
+
+  bool _selectionOverlapsHighlight() {
+    if (_currentSelection == null || _currentSelection!.isCollapsed) {
+      return false;
+    }
+    final highlights = ref
+        .read(readerHighlightsProvider(
+            (widget.uid, _selectionLanguage.isEmpty ? _activeLanguage : _selectionLanguage)))
+        .value;
+    if (highlights == null) return false;
+
+    final start = _currentSelection!.start;
+    final end = _currentSelection!.end;
+    return highlights
+        .any((h) => h.startOffset < end && h.endOffset > start);
+  }
+
+  Future<void> _onHighlightColor(String hexColor) async {
+    if (_currentSelection == null || _currentSelection!.isCollapsed) return;
+    final db = ref.read(appDatabaseProvider);
+    final lang = _selectionLanguage.isEmpty ? _activeLanguage : _selectionLanguage;
+    await db.studyToolsDao.saveHighlight(
+      textUid: widget.uid,
+      startOffset: _currentSelection!.start,
+      endOffset: _currentSelection!.end,
+      colour: hexColor,
+      language: lang,
+    );
+    _removeToolbarOverlay();
+    setState(() => _currentSelection = null);
+  }
+
+  Future<void> _onDeleteOverlappingHighlights() async {
+    if (_currentSelection == null || _currentSelection!.isCollapsed) return;
+    final lang = _selectionLanguage.isEmpty ? _activeLanguage : _selectionLanguage;
+    final highlights = ref
+        .read(readerHighlightsProvider((widget.uid, lang)))
+        .value;
+    if (highlights == null) return;
+
+    final start = _currentSelection!.start;
+    final end = _currentSelection!.end;
+    final db = ref.read(appDatabaseProvider);
+    for (final h in highlights) {
+      if (h.startOffset < end && h.endOffset > start) {
+        await db.studyToolsDao.deleteHighlight(h.id);
+      }
+    }
+    _removeToolbarOverlay();
+    setState(() => _currentSelection = null);
+  }
+
+  void _onNoteRequested() {
+    if (_currentSelection == null || _currentSelection!.isCollapsed) return;
+    final lang =
+        _selectionLanguage.isEmpty ? _activeLanguage : _selectionLanguage;
+    final highlights = ref
+        .read(readerHighlightsProvider((widget.uid, lang)))
+        .value;
+    if (highlights == null) return;
+
+    final start = _currentSelection!.start;
+    final end = _currentSelection!.end;
+    // Find the first overlapping highlight.
+    final highlight = highlights.cast<UserHighlight?>().firstWhere(
+          (h) => h!.startOffset < end && h.endOffset > start,
+          orElse: () => null,
+        );
+    if (highlight == null) return;
+
+    _removeToolbarOverlay();
+    setState(() => _currentSelection = null);
+    _showHighlightNoteDialog(highlight);
+  }
+
+  void _onDictionaryRequested() {
+    if (_currentSelection == null || _currentSelection!.isCollapsed) return;
+    if (_currentReadableText.isEmpty) return;
+
+    final start = _currentSelection!.start;
+    final end = _currentSelection!.end;
+    final selectedText = _currentReadableText
+        .substring(
+          start.clamp(0, _currentReadableText.length),
+          end.clamp(0, _currentReadableText.length),
+        )
+        .trim();
+    if (selectedText.isEmpty) return;
+
+    // Use the first word if multiple words selected.
+    final word = selectedText.split(RegExp(r'\s+')).first;
+    _removeToolbarOverlay();
+    setState(() => _currentSelection = null);
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => DictionaryPopup(word: word),
+    );
+  }
+
+  void _showHighlightNoteDialog(UserHighlight highlight) {
+    final hasNote = highlight.note != null && highlight.note!.isNotEmpty;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => _HighlightNoteSheet(
+        highlight: highlight,
+        isEditing: !hasNote,
+        onSave: (text) {
+          ref
+              .read(appDatabaseProvider)
+              .studyToolsDao
+              .updateHighlightNote(highlight.id, text);
+        },
+        onDelete: () {
+          ref
+              .read(appDatabaseProvider)
+              .studyToolsDao
+              .updateHighlightNote(highlight.id, '');
+        },
+      ),
+    );
+  }
+
+  // ── Pagination ──────────────────────────────────────────────────────────────
+
+  void _onPageChanged(int page, int totalPages) {
+    setState(() {
+      _currentPage = page;
+      _totalPages = totalPages;
+    });
+
+    // If navigated with scrollTo (e.g. from highlight tap), jump to the
+    // page containing that character offset on the first pagination.
+    if (!_didJumpToScrollTo && widget.scrollTo != null) {
+      _didJumpToScrollTo = true;
+      final targetPage =
+          _paginatedKey.currentState?.pageForOffset(widget.scrollTo!) ?? 0;
+      if (targetPage != page) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _paginatedKey.currentState?.goToPage(targetPage);
+        });
+        return; // goToPage will trigger another _onPageChanged
+      }
+    }
+
+    // Save progress: encode page as negative value to distinguish from scroll.
+    final db = ref.read(appDatabaseProvider);
+    final isLastPage = page >= totalPages - 1;
+    db.progressDao.upsertProgress(
+      textUid: widget.uid,
+      lastPosition: -(page + 1),
+      completed: isLastPage,
+    );
+  }
+
+  // ── Keyboard navigation ──────────────────────────────────────────────────
+
+  void _onKeyEvent(KeyEvent event) {
+    if (event is! KeyDownEvent) return;
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.arrowRight ||
+        key == LogicalKeyboardKey.arrowDown) {
+      _paginatedKey.currentState?.nextPage();
+    } else if (key == LogicalKeyboardKey.arrowLeft ||
+        key == LogicalKeyboardKey.arrowUp) {
+      _paginatedKey.currentState?.previousPage();
+    }
+  }
+
+  // ── Notes ──────────────────────────────────────────────────────────────────
+
+  void _showNoteSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => NoteSheet(textUid: widget.uid),
+    );
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
+
+  void _navigateToSutta(String uid) {
+    context.pushReplacement(Routes.readerPath(uid));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final suttaAsync = ref.watch(
-      readerSuttaProvider((
-        widget.uid,
-        _activeLanguage.isEmpty ? widget.language : _activeLanguage,
-      )),
-    );
+    final lang = _activeLanguage.isEmpty ? widget.language : _activeLanguage;
+    final suttaAsync = ref.watch(readerSuttaProvider((widget.uid, lang)));
     final isBookmarkedAsync = ref.watch(readerIsBookmarkedProvider(widget.uid));
     final fontSize = ref.watch(readerFontSizeProvider);
+    final lineSpacing = ref.watch(readerLineSpacingProvider);
+    final highlightsAsync =
+        ref.watch(readerHighlightsProvider((widget.uid, lang)));
+    final noteAsync = ref.watch(readerNoteProvider(widget.uid));
+    final paliAsync = _isSplitView
+        ? ref.watch(readerPaliSuttaProvider(widget.uid))
+        : null;
+    // Only fetch adjacent for non-range UIDs (ranges don't have adjacency).
+    final adjacentAsync = !isRangeUid(widget.uid)
+        ? ref.watch(readerAdjacentProvider((widget.uid, lang)))
+        : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -168,7 +514,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                 isBookmarked ? Icons.bookmark : Icons.bookmark_border,
                 color: isBookmarked ? AppColors.green : null,
               ),
-              tooltip: isBookmarked ? 'Remove bookmark' : 'Bookmark',
+              tooltip: isBookmarked ? context.l10n.readerRemoveBookmark : context.l10n.readerBookmark,
               onPressed: () {
                 if (suttaAsync.value != null) {
                   _toggleBookmark(suttaAsync.value!);
@@ -178,6 +524,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),
           ),
+          // Note button
+          IconButton(
+            icon: Icon(
+              noteAsync.value != null
+                  ? Icons.note
+                  : Icons.note_add_outlined,
+              color:
+                  noteAsync.value != null ? AppColors.green : null,
+            ),
+            tooltip: context.l10n.readerNotes,
+            onPressed: () => _showNoteSheet(context),
+          ),
           // Overflow menu
           if (suttaAsync.value != null)
             PopupMenuButton<String>(
@@ -186,70 +544,248 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                 final sutta = suttaAsync.value!;
                 if (value == 'share') _share(sutta);
                 if (value == 'pdf') _exportPdf(sutta);
+                if (value == 'commentary') {
+                  setState(() => _showCommentary = !_showCommentary);
+                }
+                if (value == 'collection') {
+                  showAddToCollectionSheet(context, ref, widget.uid);
+                }
+                if (value == 'my_translation') {
+                  setState(
+                      () => _showMyTranslation = !_showMyTranslation);
+                }
+                if (value == 'add_annotation') {
+                  showAddCommentaryDialog(context, ref, widget.uid);
+                }
               },
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'share', child: Text('Share passage')),
-                PopupMenuItem(value: 'pdf', child: Text('Export PDF')),
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'share', child: Text(context.l10n.readerSharePassage)),
+                PopupMenuItem(value: 'pdf', child: Text(context.l10n.readerExportPdf)),
+                PopupMenuItem(
+                    value: 'collection', child: Text(context.l10n.readerAddToCollection)),
+                PopupMenuItem(
+                  value: 'my_translation',
+                  child: Text(_showMyTranslation
+                      ? context.l10n.readerHideMyTranslation
+                      : context.l10n.readerMyTranslation),
+                ),
+                PopupMenuItem(
+                    value: 'add_annotation',
+                    child: Text(context.l10n.readerAddAnnotation)),
+                PopupMenuItem(
+                  value: 'commentary',
+                  child: Text(_showCommentary
+                      ? context.l10n.readerHideCommentary
+                      : context.l10n.readerShowCommentary),
+                ),
               ],
             ),
         ],
       ),
       body: suttaAsync.when(
         loading: () => const LoadingShimmer(),
-        error: (e, _) => ErrorState(message: e.toString()),
+        error: (e, _) => ErrorState(message: friendlyError(e)),
         data: (sutta) {
           if (sutta == null) {
-            return const ErrorState(
-                message: 'Sutta not found.\nDownload the content pack first.');
+            return ErrorState(
+                message: context.l10n.readerSuttaNotFound);
           }
+
+          final highlights = highlightsAsync.value ?? [];
+          final communityHl = _showCommunityHighlights
+              ? (ref.watch(communityHighlightsProvider(widget.uid)).value ?? [])
+              : <CommunityHighlight>[];
+
+          // Split view mode
+          if (_isSplitView && paliAsync != null) {
+            final paliSutta = paliAsync.value;
+            if (paliSutta != null) {
+              final paliHighlights = ref
+                      .watch(readerHighlightsProvider((widget.uid, 'pli')))
+                      .value ??
+                  [];
+              final splitPaginated = ref.watch(readerPaginatedProvider);
+              return Column(
+                children: [
+                  _Toolbar(
+                    uid: widget.uid,
+                    activeLanguage: lang,
+                    onLanguageChanged: (l) =>
+                        setState(() => _activeLanguage = l),
+                    isSplitView: _isSplitView,
+                    onToggleSplitView: () =>
+                        setState(() => _isSplitView = !_isSplitView),
+                    showSplitToggle: true,
+                    showCommunityHighlights: _showCommunityHighlights,
+                    onToggleCommunityHighlights: () => setState(() =>
+                        _showCommunityHighlights = !_showCommunityHighlights),
+                  ),
+                  Expanded(
+                    child: SplitReaderView(
+                      key: _splitKey,
+                      primarySutta: sutta,
+                      paliSutta: paliSutta,
+                      primaryHighlights: highlights,
+                      paliHighlights: paliHighlights,
+                      fontSize: fontSize,
+                      lineSpacing: lineSpacing,
+                      activeLanguage: lang,
+                      isPaginated: splitPaginated,
+                      onSelectionChanged: _onSelectionChanged,
+                      onNoteTapped: _showHighlightNoteDialog,
+                      onPageChanged: (page, total) {
+                        setState(() {
+                          _currentPage = page;
+                          _totalPages = total;
+                        });
+                      },
+                    ),
+                  ),
+                  if (splitPaginated)
+                    _PageIndicatorBar(
+                      currentPage: _currentPage,
+                      totalPages: _totalPages,
+                      onPrevPage: () =>
+                          _splitKey.currentState?.previousPage(),
+                      onNextPage: () =>
+                          _splitKey.currentState?.nextPage(),
+                    ),
+                ],
+              );
+            }
+          }
+
+          // Single view mode
+          final readableText = sutta.contentHtml != null
+              ? htmlToReadableText(sutta.contentHtml!)
+              : sutta.contentPlain ?? '';
+          _currentReadableText = readableText;
+
+          final prevUid = adjacentAsync?.value?.$1;
+          final nextUid = adjacentAsync?.value?.$2;
+          final isPaginated = ref.watch(readerPaginatedProvider);
+
           return Column(
             children: [
-              // Language / font-size toolbar
               _Toolbar(
                 uid: widget.uid,
-                activeLanguage:
-                    _activeLanguage.isEmpty ? widget.language : _activeLanguage,
-                onLanguageChanged: (lang) =>
-                    setState(() => _activeLanguage = lang),
+                activeLanguage: lang,
+                onLanguageChanged: (l) =>
+                    setState(() => _activeLanguage = l),
+                isSplitView: _isSplitView,
+                onToggleSplitView: () =>
+                    setState(() => _isSplitView = !_isSplitView),
+                showSplitToggle: true,
+                showCommunityHighlights: _showCommunityHighlights,
+                onToggleCommunityHighlights: () => setState(() =>
+                    _showCommunityHighlights = !_showCommunityHighlights),
               ),
               Expanded(
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.md,
-                    vertical: AppSizes.lg,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Sutta body
-                      sutta.contentHtml != null
-                          ? Html(
-                              data: sutta.contentHtml!,
-                              style: {
-                                'body': Style(fontSize: FontSize(fontSize)),
-                                'p': Style(
-                                  fontSize: FontSize(fontSize),
-                                  lineHeight: const LineHeight(1.7),
-                                ),
-                              },
-                            )
-                          : Text(
-                              sutta.contentPlain ?? '',
-                              style: TextStyle(fontSize: fontSize, height: 1.7),
-                            ),
-                      const SizedBox(height: AppSizes.xl),
-                      // Translator attribution (CC-BY requirement)
-                      TranslatorAttributionWidget(
-                        translator: sutta.translator,
-                        source: sutta.source ?? 'sc',
-                        uid: sutta.uid,
+                child: isPaginated
+                    ? KeyboardListener(
+                        focusNode: _keyboardFocusNode,
+                        autofocus: true,
+                        onKeyEvent: _onKeyEvent,
+                        child: PaginatedReaderView(
+                        key: _paginatedKey,
+                        text: readableText,
+                        highlights: highlights,
+                        fontSize: fontSize,
+                        lineSpacing: lineSpacing,
+                        initialPage: _restoredPage,
+                        onSelectionChanged: (sel, cause) =>
+                            _onSelectionChanged(sel, cause),
+                        onNoteTapped: _showHighlightNoteDialog,
+                        onPageChanged: _onPageChanged,
+                        onLastPageReached: () {
+                          final db = ref.read(appDatabaseProvider);
+                          db.progressDao.upsertProgress(
+                            textUid: widget.uid,
+                            lastPosition: -(_totalPages),
+                            completed: true,
+                          );
+                        },
                       ),
-                      const SizedBox(height: AppSizes.xxl),
-                    ],
-                  ),
-                ),
+                      )
+                    : GestureDetector(
+                        onHorizontalDragEnd: (details) {
+                          final velocity = details.primaryVelocity ?? 0;
+                          if (velocity > 300 && prevUid != null) {
+                            _navigateToSutta(prevUid);
+                          } else if (velocity < -300 && nextUid != null) {
+                            _navigateToSutta(nextUid);
+                          }
+                        },
+                        child: SingleChildScrollView(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSizes.md,
+                            vertical: AppSizes.lg,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              HighlightedText(
+                                text: readableText,
+                                highlights: highlights,
+                                communityHighlights: communityHl,
+                                fontSize: fontSize,
+                                lineSpacing: lineSpacing,
+                                onSelectionChanged: (sel, cause) =>
+                                    _onSelectionChanged(sel, cause),
+                                onNoteTapped: _showHighlightNoteDialog,
+                              ),
+                              // My Translation view
+                              if (_showMyTranslation)
+                                MyTranslationView(
+                                  suttaUid: widget.uid,
+                                  fontSize: fontSize,
+                                  lineSpacing: lineSpacing,
+                                ),
+                              // User annotations/commentary
+                              if (_showCommentary)
+                                CommentaryView(suttaUid: widget.uid),
+                              const SizedBox(height: AppSizes.xl),
+                              TranslatorAttributionWidget(
+                                translator: sutta.translator,
+                                source: sutta.source ?? 'sc',
+                                uid: sutta.uid,
+                              ),
+                              const SizedBox(height: AppSizes.xxl),
+                            ],
+                          ),
+                        ),
+                      ),
               ),
+              // Bottom bar: page indicator (paginated) or prev/next (scroll)
+              if (isPaginated)
+                _PageIndicatorBar(
+                  currentPage: _currentPage,
+                  totalPages: _totalPages,
+                  prevUid: prevUid,
+                  nextUid: nextUid,
+                  onPrevPage: () =>
+                      _paginatedKey.currentState?.previousPage(),
+                  onNextPage: () =>
+                      _paginatedKey.currentState?.nextPage(),
+                  onPrevSutta: prevUid != null
+                      ? () => _navigateToSutta(prevUid)
+                      : null,
+                  onNextSutta: nextUid != null
+                      ? () => _navigateToSutta(nextUid)
+                      : null,
+                )
+              else if (prevUid != null || nextUid != null)
+                _ReaderBottomBar(
+                  prevUid: prevUid,
+                  nextUid: nextUid,
+                  onPrev: prevUid != null
+                      ? () => _navigateToSutta(prevUid)
+                      : null,
+                  onNext: nextUid != null
+                      ? () => _navigateToSutta(nextUid)
+                      : null,
+                ),
             ],
           );
         },
@@ -265,11 +801,21 @@ class _Toolbar extends ConsumerWidget {
     required this.uid,
     required this.activeLanguage,
     required this.onLanguageChanged,
+    this.isSplitView = false,
+    this.onToggleSplitView,
+    this.showSplitToggle = false,
+    this.showCommunityHighlights = false,
+    this.onToggleCommunityHighlights,
   });
 
   final String uid;
   final String activeLanguage;
   final ValueChanged<String> onLanguageChanged;
+  final bool isSplitView;
+  final VoidCallback? onToggleSplitView;
+  final bool showSplitToggle;
+  final bool showCommunityHighlights;
+  final VoidCallback? onToggleCommunityHighlights;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -294,7 +840,7 @@ class _Toolbar extends ConsumerWidget {
           // Font size stepper
           IconButton(
             icon: const Icon(Icons.text_decrease, size: 18),
-            tooltip: 'Smaller',
+            tooltip: context.l10n.readerSmaller,
             onPressed: idx > 0
                 ? () => ref.read(readerFontSizeProvider.notifier).decrease()
                 : null,
@@ -305,12 +851,56 @@ class _Toolbar extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.text_increase, size: 18),
-            tooltip: 'Larger',
+            tooltip: context.l10n.readerLarger,
             onPressed: idx < sizes.length - 1
                 ? () => ref.read(readerFontSizeProvider.notifier).increase()
                 : null,
           ),
           const Spacer(),
+          // Paginated / scroll toggle
+          IconButton(
+            icon: Icon(
+              ref.watch(readerPaginatedProvider)
+                  ? Icons.auto_stories
+                  : Icons.view_day,
+              size: 20,
+              color: ref.watch(readerPaginatedProvider)
+                  ? AppColors.green
+                  : null,
+            ),
+            tooltip: ref.watch(readerPaginatedProvider)
+                ? context.l10n.readerSwitchToScroll
+                : context.l10n.readerSwitchToPages,
+            onPressed: () =>
+                ref.read(readerPaginatedProvider.notifier).toggle(),
+          ),
+          // Split view toggle
+          if (showSplitToggle)
+            langsAsync.when(
+              data: (langs) {
+                if (!langs.contains('pli') || langs.length <= 1) {
+                  return const SizedBox.shrink();
+                }
+                return IconButton(
+                  icon: Icon(
+                    isSplitView ? Icons.view_agenda : Icons.view_column,
+                    size: 20,
+                    color: isSplitView ? AppColors.green : null,
+                  ),
+                  tooltip:
+                      isSplitView ? context.l10n.readerSingleView : context.l10n.readerSideBySide,
+                  onPressed: onToggleSplitView,
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+          // Community highlights toggle
+          if (onToggleCommunityHighlights != null)
+            CommunityHighlightToggle(
+              enabled: showCommunityHighlights,
+              onChanged: (_) => onToggleCommunityHighlights!(),
+            ),
           // Language picker
           langsAsync.when(
             data: (langs) {
@@ -332,6 +922,343 @@ class _Toolbar extends ConsumerWidget {
             error: (_, __) => const SizedBox.shrink(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Bottom nav bar ───────────────────────────────────────────────────────────
+
+class _PageIndicatorBar extends StatelessWidget {
+  const _PageIndicatorBar({
+    required this.currentPage,
+    required this.totalPages,
+    this.prevUid,
+    this.nextUid,
+    this.onPrevPage,
+    this.onNextPage,
+    this.onPrevSutta,
+    this.onNextSutta,
+  });
+
+  final int currentPage;
+  final int totalPages;
+  final String? prevUid;
+  final String? nextUid;
+  final VoidCallback? onPrevPage;
+  final VoidCallback? onNextPage;
+  final VoidCallback? onPrevSutta;
+  final VoidCallback? onNextSutta;
+
+  @override
+  Widget build(BuildContext context) {
+    final isFirstPage = currentPage == 0;
+    final isLastPage = currentPage >= totalPages - 1;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(
+          top: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            // Prev sutta (skip back)
+            IconButton(
+              onPressed: onPrevSutta,
+              icon: const Icon(Icons.skip_previous, size: 20),
+              tooltip: context.l10n.readerPrevSutta,
+              color: AppColors.green,
+              visualDensity: VisualDensity.compact,
+            ),
+            // Prev page
+            IconButton(
+              onPressed: isFirstPage ? null : onPrevPage,
+              icon: const Icon(Icons.chevron_left),
+              tooltip: context.l10n.readerPrevPage,
+              color: AppColors.green,
+              visualDensity: VisualDensity.compact,
+            ),
+            const Spacer(),
+            // Page indicator
+            Semantics(
+              label: totalPages > 0
+                  ? context.l10n.readerPageOf(currentPage + 1, totalPages)
+                  : '',
+              child: Text(
+              totalPages > 0
+                  ? context.l10n.readerPageOf(currentPage + 1, totalPages)
+                  : '',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.6),
+              ),
+            ),
+            ),
+            const Spacer(),
+            // Next page
+            IconButton(
+              onPressed: isLastPage ? null : onNextPage,
+              icon: const Icon(Icons.chevron_right),
+              tooltip: context.l10n.readerNextPage,
+              color: AppColors.green,
+              visualDensity: VisualDensity.compact,
+            ),
+            // Next sutta (skip forward)
+            IconButton(
+              onPressed: onNextSutta,
+              icon: const Icon(Icons.skip_next, size: 20),
+              tooltip: context.l10n.readerNextSutta,
+              color: AppColors.green,
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReaderBottomBar extends StatelessWidget {
+  const _ReaderBottomBar({
+    this.prevUid,
+    this.nextUid,
+    this.onPrev,
+    this.onNext,
+  });
+
+  final String? prevUid;
+  final String? nextUid;
+  final VoidCallback? onPrev;
+  final VoidCallback? onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(
+          top: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            TextButton.icon(
+              onPressed: onPrev,
+              icon: const Icon(Icons.chevron_left, size: 20),
+              label: Text(context.l10n.readerPrevious),
+              style: TextButton.styleFrom(
+                foregroundColor: onPrev != null
+                    ? AppColors.green
+                    : Colors.grey.withValues(alpha: 0.4),
+              ),
+            ),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: onNext,
+              icon: const Icon(Icons.chevron_right, size: 20),
+              iconAlignment: IconAlignment.end,
+              label: Text(context.l10n.readerNext),
+              style: TextButton.styleFrom(
+                foregroundColor: onNext != null
+                    ? AppColors.green
+                    : Colors.grey.withValues(alpha: 0.4),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Highlight note sheet ─────────────────────────────────────────────────────
+
+class _HighlightNoteSheet extends StatefulWidget {
+  const _HighlightNoteSheet({
+    required this.highlight,
+    required this.onSave,
+    required this.onDelete,
+    this.isEditing = false,
+  });
+
+  final UserHighlight highlight;
+  final void Function(String text) onSave;
+  final VoidCallback onDelete;
+  final bool isEditing;
+
+  @override
+  State<_HighlightNoteSheet> createState() => _HighlightNoteSheetState();
+}
+
+class _HighlightNoteSheetState extends State<_HighlightNoteSheet> {
+  late final TextEditingController _controller;
+  late bool _editing;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.highlight.note ?? '');
+    _editing = widget.isEditing;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    widget.onSave(_controller.text.trim());
+    setState(() => _editing = false);
+  }
+
+  void _share() {
+    final note = _controller.text.trim();
+    if (note.isEmpty) return;
+    Share.share(note, subject: 'Highlight note');
+  }
+
+  void _delete() {
+    widget.onDelete();
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final note = widget.highlight.note ?? '';
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        constraints: const BoxConstraints(maxHeight: 420),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[400],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Header
+            Row(
+              children: [
+                const Icon(Icons.sticky_note_2_outlined,
+                    color: AppColors.green),
+                const SizedBox(width: 8),
+                Text(
+                  context.l10n.readerHighlightNote,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Content
+            if (_editing)
+              Expanded(
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        maxLines: null,
+                        expands: true,
+                        textAlignVertical: TextAlignVertical.top,
+                        autofocus: true,
+                        decoration: InputDecoration(
+                          hintText: context.l10n.readerWriteNoteHint,
+                          border: const OutlineInputBorder(),
+                          contentPadding: const EdgeInsets.all(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            if (note.isNotEmpty) {
+                              _controller.text = note;
+                              setState(() => _editing = false);
+                            } else {
+                              Navigator.pop(context);
+                            }
+                          },
+                          child: Text(context.l10n.cancel),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton(
+                          onPressed: _save,
+                          child: Text(context.l10n.save),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              )
+            else ...[
+              // Note text
+              Expanded(
+                child: SingleChildScrollView(
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Text(
+                      note,
+                      style: const TextStyle(fontSize: 15, height: 1.6),
+                    ),
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+              // Action bar — clearly visible labeled buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => setState(() => _editing = true),
+                    icon: const Icon(Icons.edit_outlined),
+                    label: Text(context.l10n.readerEdit),
+                  ),
+                  TextButton.icon(
+                    onPressed: _share,
+                    icon: const Icon(Icons.share_outlined),
+                    label: Text(context.l10n.readerShare),
+                  ),
+                  TextButton.icon(
+                    onPressed: _delete,
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    label: Text(context.l10n.readerDelete,
+                        style: const TextStyle(color: Colors.red)),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

@@ -7,6 +7,10 @@ class UserHighlights extends Table {
   IntColumn get endOffset => integer().named('end_offset')();
   // Stored as hex string e.g. '#FFF176'
   TextColumn get colour => text()();
+  // Language the highlight applies to (offsets are language-specific).
+  TextColumn get language =>
+      text().withDefault(const Constant('en'))();
+  TextColumn get note => text().nullable()();
   TextColumn get userId => text().named('user_id').nullable()();
   DateTimeColumn get createdAt =>
       dateTime().named('created_at').withDefault(currentDateAndTime)();

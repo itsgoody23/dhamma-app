@@ -1,0 +1,110 @@
+[
+  {
+    "id": "chant-homage",
+    "title": "Veneration — Homage to the Triple Gem",
+    "type": "chanting",
+    "teacher": "Metta Forest Monastery",
+    "sutta_uid": null,
+    "duration_seconds": 180,
+    "url": "https://www.dhammatalks.org/Archive/Chants/01Veneration(p165).mp3"
+  },
+  {
+    "id": "chant-morning",
+    "title": "Morning Chanting",
+    "type": "chanting",
+    "teacher": "Metta Forest Monastery",
+    "sutta_uid": null,
+    "duration_seconds": 600,
+    "url": "https://www.dhammatalks.org/Archive/Chants/02MorningChanting(p1).mp3"
+  },
+  {
+    "id": "chant-evening",
+    "title": "Evening Chanting",
+    "type": "chanting",
+    "teacher": "Metta Forest Monastery",
+    "sutta_uid": null,
+    "duration_seconds": 600,
+    "url": "https://www.dhammatalks.org/Archive/Chants/04EveningChanting(p12).mp3"
+  },
+  {
+    "id": "chant-metta-sutta",
+    "title": "Karanīya Mettā Sutta",
+    "type": "chanting",
+    "teacher": "Metta Forest Monastery",
+    "sutta_uid": "snp1.8",
+    "duration_seconds": 300,
+    "url": "https://www.dhammatalks.org/Archive/Chants/15KaraniyaMettaSutta(p120).mp3"
+  },
+  {
+    "id": "chant-mangala-sutta",
+    "title": "Mahā Maṅgala Sutta",
+    "type": "chanting",
+    "teacher": "Metta Forest Monastery",
+    "sutta_uid": "snp2.4",
+    "duration_seconds": 360,
+    "url": "https://www.dhammatalks.org/Archive/Chants/13MangalaSuttam(p115).mp3"
+  },
+  {
+    "id": "chant-ratana-paritta",
+    "title": "Ratana Paritta Gāthā",
+    "type": "chanting",
+    "teacher": "Metta Forest Monastery",
+    "sutta_uid": "snp2.1",
+    "duration_seconds": 420,
+    "url": "https://www.dhammatalks.org/Archive/Chants/14ChaRatanaParittaGatha(p117).mp3"
+  },
+  {
+    "id": "chant-dhammacakka",
+    "title": "Dhammacakkappavattana Sutta",
+    "type": "chanting",
+    "teacher": "Metta Forest Monastery",
+    "sutta_uid": "sn56.11",
+    "duration_seconds": 1200,
+    "url": "https://www.dhammatalks.org/Archive/Chants/23Dhamma-cakkappavattanaSutta.mp3"
+  },
+  {
+    "id": "chant-fire-discourse",
+    "title": "Ādittapariyāya Sutta — The Fire Discourse",
+    "type": "chanting",
+    "teacher": "Metta Forest Monastery",
+    "sutta_uid": "sn35.28",
+    "duration_seconds": 600,
+    "url": "https://www.dhammatalks.org/Archive/Chants/25Aditta_Fire_Discourse.mp3"
+  },
+  {
+    "id": "chant-sublime-attitudes",
+    "title": "Sublime Attitudes (Brahmavihāra)",
+    "type": "chanting",
+    "teacher": "Metta Forest Monastery",
+    "sutta_uid": null,
+    "duration_seconds": 300,
+    "url": "https://www.dhammatalks.org/Archive/Chants/12SublimeAttitudes(p34).mp3"
+  },
+  {
+    "id": "chant-five-recollections",
+    "title": "Five Recollections",
+    "type": "chanting",
+    "teacher": "Metta Forest Monastery",
+    "sutta_uid": null,
+    "duration_seconds": 180,
+    "url": "https://www.dhammatalks.org/Archive/Chants/07FiveRecollections(p25).mp3"
+  },
+  {
+    "id": "chant-noble-truths",
+    "title": "Verses on the Noble Truths",
+    "type": "chanting",
+    "teacher": "Metta Forest Monastery",
+    "sutta_uid": null,
+    "duration_seconds": 240,
+    "url": "https://www.dhammatalks.org/Archive/Chants/10VersesOnTheNobleTruths(p27).mp3"
+  },
+  {
+    "id": "chant-buddha-jayamangala",
+    "title": "Buddha-jaya-maṅgala Gāthā",
+    "type": "chanting",
+    "teacher": "Metta Forest Monastery",
+    "sutta_uid": null,
+    "duration_seconds": 360,
+    "url": "https://www.dhammatalks.org/Archive/Chants/17Buddha-jaya-mangalaGatha(p130).mp3"
+  }
+]

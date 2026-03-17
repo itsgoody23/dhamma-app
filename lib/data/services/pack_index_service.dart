@@ -69,4 +69,14 @@ class PackIndexService {
       await file.writeAsString(content);
     } catch (_) {}
   }
+
+  /// Check if a remote pack has a newer version than what's installed locally.
+  bool hasUpdate({
+    required ContentPack remotePack,
+    required String? installedVersion,
+  }) {
+    final remoteVersion = remotePack.version;
+    if (remoteVersion == null || installedVersion == null) return false;
+    return remoteVersion != installedVersion;
+  }
 }

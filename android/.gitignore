@@ -1,0 +1,9 @@
+gradle-wrapper.jar
+/.gradle
+/captures/
+/local.properties
+GeneratedPluginRegistrant.java
+
+# Release signing
+key.properties
+keystore/

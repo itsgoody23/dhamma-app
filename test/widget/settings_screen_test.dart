@@ -24,6 +24,9 @@ void main() {
 
     expect(find.text('READING'), findsOneWidget);
     expect(find.text('DOWNLOADS'), findsOneWidget);
+    // Scroll down to reveal the About section
+    await tester.drag(find.byType(ListView), const Offset(0, -300));
+    await tester.pump();
     expect(find.text('ABOUT'), findsOneWidget);
   });
 
@@ -42,7 +45,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Wi-Fi only downloads'), findsOneWidget);
-    expect(find.byType(SwitchListTile), findsOneWidget);
+    expect(find.byType(SwitchListTile), findsWidgets);
   });
 
   testWidgets('shows Licences, SuttaCentral, Version items in About',
@@ -120,7 +123,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final switchWidget = tester.widget<SwitchListTile>(
-      find.byType(SwitchListTile),
+      find.widgetWithText(SwitchListTile, 'Wi-Fi only downloads'),
     );
     expect(switchWidget.value, isTrue);
   });

@@ -47,6 +47,7 @@ void main() {
       startOffset: 0,
       endOffset: 18,
       colour: '#FFD700',
+      language: 'en',
     );
     final highlights = await db.studyToolsDao.watchHighlightsForUid(uid).first;
     expect(highlights.length, 1);

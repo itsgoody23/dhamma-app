@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
+import '../../core/extensions/l10n_extension.dart';
 import '../../core/routing/routes.dart';
 import '../../shared/providers/database_provider.dart';
 import '../../shared/providers/preferences_provider.dart';
@@ -91,7 +92,7 @@ class LibraryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Library'),
+        title: Text(context.l10n.libraryTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
@@ -123,7 +124,10 @@ class _NikayaCard extends ConsumerWidget {
     final progressAsync = ref.watch(nikayaProgressProvider(info.id));
     final color = AppColors.nikayaColor(info.id);
 
-    return Card(
+    return Semantics(
+      button: true,
+      label: '${info.pali}, ${info.english}',
+      child: Card(
       child: InkWell(
         onTap: () => context.push(Routes.nikayaPath(info.id)),
         borderRadius: BorderRadius.circular(12),
@@ -131,25 +135,29 @@ class _NikayaCard extends ConsumerWidget {
           padding: const EdgeInsets.all(AppSizes.md),
           child: Row(
             children: [
-              // Colour indicator bar
-              Container(
-                width: 4,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(2),
+              // Colour indicator bar (decorative)
+              ExcludeSemantics(
+                child: Container(
+                  width: 4,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
               const SizedBox(width: AppSizes.md),
-              // Icon
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+              // Icon (decorative)
+              ExcludeSemantics(
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(info.icon, color: color, size: 24),
                 ),
-                child: Icon(info.icon, color: color, size: 24),
               ),
               const SizedBox(width: AppSizes.md),
               // Text
@@ -197,6 +205,7 @@ class _NikayaCard extends ConsumerWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }
@@ -209,7 +218,9 @@ class _ProgressRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Semantics(
+      label: '${(progress * 100).round()}% complete',
+      child: SizedBox(
       width: 36,
       height: 36,
       child: Stack(
@@ -232,6 +243,7 @@ class _ProgressRing extends StatelessWidget {
             ),
         ],
       ),
+    ),
     );
   }
 }

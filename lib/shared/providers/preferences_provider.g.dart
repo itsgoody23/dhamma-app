@@ -149,6 +149,100 @@ abstract class _$ReaderLanguageNotifier extends $Notifier<String> {
   }
 }
 
+@ProviderFor(ReaderPaginatedNotifier)
+final readerPaginatedProvider = ReaderPaginatedNotifierProvider._();
+
+final class ReaderPaginatedNotifierProvider
+    extends $NotifierProvider<ReaderPaginatedNotifier, bool> {
+  ReaderPaginatedNotifierProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'readerPaginatedProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$readerPaginatedNotifierHash();
+
+  @$internal
+  @override
+  ReaderPaginatedNotifier create() => ReaderPaginatedNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$readerPaginatedNotifierHash() =>
+    r'42bad3d2b04d3dad38ac0f404b00ec1bf9265d7b';
+
+abstract class _$ReaderPaginatedNotifier extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<bool, bool>, bool, Object?, Object?>;
+    element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(ReaderLineSpacingNotifier)
+final readerLineSpacingProvider = ReaderLineSpacingNotifierProvider._();
+
+final class ReaderLineSpacingNotifierProvider
+    extends $NotifierProvider<ReaderLineSpacingNotifier, double> {
+  ReaderLineSpacingNotifierProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'readerLineSpacingProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$readerLineSpacingNotifierHash();
+
+  @$internal
+  @override
+  ReaderLineSpacingNotifier create() => ReaderLineSpacingNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(double value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<double>(value),
+    );
+  }
+}
+
+String _$readerLineSpacingNotifierHash() =>
+    r'712099756ca465b38a24cbca26d924543bc276c0';
+
+abstract class _$ReaderLineSpacingNotifier extends $Notifier<double> {
+  double build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<double, double>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<double, double>, double, Object?, Object?>;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(WifiOnlySyncNotifier)
 final wifiOnlySyncProvider = WifiOnlySyncNotifierProvider._();
 
@@ -185,6 +279,53 @@ String _$wifiOnlySyncNotifierHash() =>
     r'b8e348bd24759dbc39cdb271c75a403a382f6c99';
 
 abstract class _$WifiOnlySyncNotifier extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<bool, bool>, bool, Object?, Object?>;
+    element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(AudioMobileDataNotifier)
+final audioMobileDataProvider = AudioMobileDataNotifierProvider._();
+
+final class AudioMobileDataNotifierProvider
+    extends $NotifierProvider<AudioMobileDataNotifier, bool> {
+  AudioMobileDataNotifierProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'audioMobileDataProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$audioMobileDataNotifierHash();
+
+  @$internal
+  @override
+  AudioMobileDataNotifier create() => AudioMobileDataNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$audioMobileDataNotifierHash() =>
+    r'f69822f47f140f14e7f0d97d6b48592f4573f39d';
+
+abstract class _$AudioMobileDataNotifier extends $Notifier<bool> {
   bool build();
   @$mustCallSuper
   @override
@@ -238,6 +379,52 @@ abstract class _$WifiOnlyNotifier extends $Notifier<bool> {
     final ref = this.ref as $Ref<bool, bool>;
     final element = ref.element as $ClassProviderElement<
         AnyNotifier<bool, bool>, bool, Object?, Object?>;
+    element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(AppLocaleNotifier)
+final appLocaleProvider = AppLocaleNotifierProvider._();
+
+final class AppLocaleNotifierProvider
+    extends $NotifierProvider<AppLocaleNotifier, Locale?> {
+  AppLocaleNotifierProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'appLocaleProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$appLocaleNotifierHash();
+
+  @$internal
+  @override
+  AppLocaleNotifier create() => AppLocaleNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Locale? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Locale?>(value),
+    );
+  }
+}
+
+String _$appLocaleNotifierHash() => r'a1454ecaf2e3299a77f40cc3653d32f7e7943e49';
+
+abstract class _$AppLocaleNotifier extends $Notifier<Locale?> {
+  Locale? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<Locale?, Locale?>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<Locale?, Locale?>, Locale?, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }

@@ -40,7 +40,10 @@ class SuttaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = AppColors.nikayaColor(nikaya);
 
-    return Card(
+    return Semantics(
+      button: true,
+      label: '$title, ${nikaya.toUpperCase()} nikaya',
+      child: Card(
       margin: const EdgeInsets.symmetric(vertical: AppSizes.xs),
       child: InkWell(
         onTap: () {
@@ -104,6 +107,7 @@ class SuttaCard extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

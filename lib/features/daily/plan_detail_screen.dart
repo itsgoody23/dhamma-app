@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/routing/routes.dart';
+import '../../core/utils/uid_utils.dart';
 import '../../data/models/reading_plan.dart';
 import '../../shared/providers/database_provider.dart';
 import 'daily_screen.dart';
@@ -35,6 +36,37 @@ Future<Map<String, bool>> planProgress(Ref ref, String planId) async {
   return result;
 }
 
+/// Checks which plan UIDs have downloaded text available.
+@riverpod
+Future<Set<String>> planAvailability(Ref ref, String planId) async {
+  final plan = await ref.watch(planByIdProvider(planId).future);
+  if (plan == null) return {};
+  final db = ref.watch(appDatabaseProvider);
+
+  Future<MapEntry<String, bool>> checkDay(day) async {
+    try {
+      if (isRangeUid(day.uid)) {
+        // For range UIDs like 'dhp1-20', check if ANY individual verse exists.
+        final expanded = expandRangeUid(day.uid);
+        final sutta =
+            await db.textsDao.getSuttaByUidAnyLanguage(expanded.first);
+        return MapEntry(day.uid, sutta != null);
+      } else {
+        final sutta = await db.textsDao.getSuttaByUidAnyLanguage(day.uid);
+        return MapEntry(day.uid, sutta != null);
+      }
+    } catch (_) {
+      return MapEntry(day.uid, false);
+    }
+  }
+
+  final results = await Future.wait(plan.days.map(checkDay));
+  return {
+    for (final entry in results)
+      if (entry.value) entry.key,
+  };
+}
+
 class PlanDetailScreen extends ConsumerWidget {
   const PlanDetailScreen({super.key, required this.planId});
 
@@ -44,6 +76,7 @@ class PlanDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final planAsync = ref.watch(planByIdProvider(planId));
     final progressAsync = ref.watch(planProgressProvider(planId));
+    final availabilityAsync = ref.watch(planAvailabilityProvider(planId));
 
     return planAsync.when(
       loading: () =>
@@ -58,6 +91,7 @@ class PlanDetailScreen extends ConsumerWidget {
         }
 
         final progress = progressAsync.value ?? {};
+        final available = availabilityAsync.value ?? {};
         final completed = progress.values.where((v) => v).length;
 
         return Scaffold(
@@ -113,30 +147,55 @@ class PlanDetailScreen extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final day = plan.days[index];
                     final isDone = progress[day.uid] ?? false;
+                    final isAvailable = available.contains(day.uid);
                     return ListTile(
                       leading: CircleAvatar(
                         radius: 16,
                         backgroundColor: isDone
                             ? AppColors.green
-                            : AppColors.green.withValues(alpha: 0.1),
+                            : isAvailable
+                                ? AppColors.green.withValues(alpha: 0.1)
+                                : Colors.grey.withValues(alpha: 0.1),
                         child: isDone
                             ? const Icon(Icons.check,
                                 size: 16, color: Colors.white)
                             : Text(
                                 '${day.day}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.green,
+                                  color: isAvailable
+                                      ? AppColors.green
+                                      : Colors.grey,
                                 ),
                               ),
                       ),
-                      title: Text(day.title),
-                      subtitle: day.description != null
-                          ? Text(day.description!)
-                          : null,
-                      trailing: const Icon(Icons.chevron_right, size: 20),
-                      onTap: () => context.push(Routes.readerPath(day.uid)),
+                      title: Text(
+                        day.title,
+                        style: TextStyle(
+                          color: isAvailable
+                              ? null
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.4),
+                        ),
+                      ),
+                      subtitle: !isAvailable
+                          ? const Text('Not downloaded',
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey))
+                          : day.description != null
+                              ? Text(day.description!)
+                              : null,
+                      trailing: isAvailable
+                          ? const Icon(Icons.chevron_right, size: 20)
+                          : Icon(Icons.download_outlined,
+                              size: 20,
+                              color: Colors.grey.withValues(alpha: 0.5)),
+                      onTap: isAvailable
+                          ? () => context.push(Routes.readerPath(day.uid))
+                          : () => context.push(Routes.downloads),
                     );
                   },
                 ),

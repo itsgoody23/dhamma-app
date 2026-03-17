@@ -20,6 +20,7 @@ jobs:
           channel: 'stable'
 
       - run: flutter pub get
+      - run: flutter gen-l10n
       - run: flutter analyze
       - run: dart format --set-exit-if-changed .
 

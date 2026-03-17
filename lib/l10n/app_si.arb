@@ -1,0 +1,321 @@
+{
+  "@@locale": "si",
+
+  "appTitle": "ධම්ම ඇප්",
+
+  "navLibrary": "පුස්තකාලය",
+  "navSearch": "සොයන්න",
+  "navDaily": "දෛනික",
+  "navAudio": "ශ්‍රව්‍ය",
+  "navStudy": "අධ්‍යයනය",
+  "navDownloads": "බාගැනීම්",
+
+  "settingsTitle": "සැකසුම්",
+  "settingsReading": "කියවීම",
+  "settingsTheme": "තේමාව",
+  "settingsFontSize": "අකුරු ප්‍රමාණය",
+  "settingsLineSpacing": "පේළි පරතරය",
+  "settingsDefaultLanguage": "පෙරනිමි භාෂාව",
+  "settingsAppLanguage": "යෙදුම් භාෂාව",
+  "settingsAppLanguageSubtitle": "අතුරු මුහුණතේ භාෂාව වෙනස් කරන්න",
+  "settingsSystemDefault": "පද්ධති පෙරනිමිය",
+  "settingsDownloads": "බාගැනීම්",
+  "settingsWifiOnly": "Wi-Fi පමණක් බාගැනීම්",
+  "settingsWifiOnlySubtitle": "ජංගම දත්ත මත බාගැනීම් වළක්වයි",
+  "settingsAudioMobileData": "ජංගම දත්ත මත ශ්‍රව්‍ය පමණි",
+  "settingsAudioMobileDataSubtitle": "ප්‍රවාහය Wi-Fi වෙත සීමා කරන්න",
+  "settingsAccount": "ගිණුම",
+  "settingsManageAccount": "ගිණුම කළමනාකරණය",
+  "settingsSignIn": "පුරන්න",
+  "settingsSignInSubtitle": "ඔබේ ප්‍රගතිය උපාංග හරහා සමමුහුර්ත කරන්න",
+  "settingsSyncWifiOnly": "Wi-Fi මත පමණක් සමමුහුර්ත කරන්න",
+  "settingsSyncWifiOnlySubtitle": "ජංගම දත්ත මත සමමුහුර්තය වළක්වයි",
+  "settingsAbout": "පිළිබඳව",
+  "settingsLicences": "බලපත්‍ර",
+  "settingsSourceCode": "මූලාශ්‍ර කේතය",
+  "settingsVersion": "අනුවාදය",
+  "settingsThemeLight": "සැහැල්ලු",
+  "settingsThemeDark": "අඳුරු",
+  "settingsThemeSystem": "පද්ධති පෙරනිමිය",
+  "settingsFontSmall": "කුඩා",
+  "settingsFontMedium": "මධ්‍යම",
+  "settingsFontLarge": "විශාල",
+  "settingsFontXL": "ඉතා විශාල",
+  "settingsLineCompact": "සංක්ෂිප්ත",
+  "settingsLineNormal": "සාමාන්‍ය",
+  "settingsLineRelaxed": "ලිහිල්",
+
+  "dailyTitle": "දෛනික",
+  "dailySuttaOfTheDay": "අද සූත්‍රය",
+  "dailyReadNow": "දැන් කියවන්න",
+  "dailyNoSutta": "දෛනික සූත්‍රයක් නොමැත. කරුණාකර ධම්මපද පැකේජය බාගන්න.",
+  "dailyContinueReading": "කියවීම දිගටම",
+  "dailyCompleted": "සම්පූර්ණයි",
+  "dailyInProgress": "ක්‍රියාත්මක වෙමින්",
+  "dailyCategoryClassics": "සම්භාව්‍ය",
+  "dailyCategoryDoctrinal": "ධර්මානුකූල",
+  "dailyCategoryMeditation": "භාවනා",
+  "dailyCategoryNikayaStudy": "නිකාය අධ්‍යයනය",
+  "dailyDaysCount": "දින {count} \u2014 {description}",
+  "@dailyDaysCount": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "description": {"type": "String"}
+    }
+  },
+  "dailyBeginner": "ආරම්භක",
+  "dailyIntermediate": "මධ්‍යම",
+  "dailyAdvanced": "උසස්",
+
+  "searchHint": "සූත්‍ර, මූල පද, මාතෘකා සොයන්න\u2026",
+  "searchEmpty": "පාළි ත්‍රිපිටකයේ සොයන්න\nමාතෘකාව, මූල පදය, හෝ වාක්‍ය ඛණ්ඩය අනුව",
+  "searchTip": "ඉඟිය: \u201csatipa\u1e6d\u1e6dh\u0101na\u201d හෝ \u201csatipatthana\u201d දෙකම ක්‍රියා කරයි",
+  "searchNoResults": "\u201c{query}\u201c සඳහා ප්‍රතිඵල නැත",
+  "@searchNoResults": {
+    "placeholders": { "query": {"type": "String"} }
+  },
+  "searchTryDifferent": "වෙනත් මූල පදයක් උත්සාහ කරන්න හෝ තවත් පැකේජ බාගන්න",
+  "searchRecentSearches": "මෑත සෙවීම්",
+  "searchClear": "මකන්න",
+  "searchFilterResults": "ප්‍රතිඵල පෙරන්න",
+  "searchClearAll": "සියල්ල මකන්න",
+  "searchNikaya": "නිකාය",
+  "searchLanguage": "භාෂාව",
+  "searchApply": "යොදන්න",
+
+  "libraryTitle": "පුස්තකාලය",
+
+  "downloadsTitle": "බාගැනීම්",
+  "downloadsWifiOnly": "Wi-Fi පමණක් බාගැනීම්",
+  "downloadsWifiOnlySubtitle": "ජංගම දත්ත ඉතිරි කිරීමට නිර්දේශිතයි",
+  "downloadsInstalled": "ස්ථාපිත",
+  "downloadsAvailable": "බාගැනීමට ඇත",
+  "downloadsNoPacks": "පැකේජ නොමැත. ඔබේ අන්තර්ජාල සම්බන්ධතාවය පරීක්ෂා කරන්න.",
+  "downloadsAllInstalled": "සියලුම පැකේජ ස්ථාපිතයි.",
+  "downloadsStorageUsed": "ධම්ම ඇප් භාවිත ගබඩාව",
+  "downloadsUpdateAvailable": "යාවත්කාලීනයක් ඇත",
+  "downloadsUpdatePack": "පැකේජය යාවත්කාලීන කරන්න",
+  "downloadsDeletePack": "පැකේජය මකන්න",
+  "downloadsDeleteConfirm": "පැකේජය මකන්නද?",
+  "downloadsDeleteMessage": "මෙය \u201c{packName}\u201c ඉවත් කර {sizeMb} MB ගබඩාව නිදහස් කරයි.",
+  "@downloadsDeleteMessage": {
+    "placeholders": {
+      "packName": {"type": "String"},
+      "sizeMb": {"type": "String"}
+    }
+  },
+  "downloadsInstalling": "ස්ථාපනය වෙමින්\u2026",
+  "downloadsDownloadFailed": "බාගැනීම අසාර්ථකයි",
+
+  "readerSharePassage": "ඡේදය බෙදාගන්න",
+  "readerExportPdf": "PDF අපනයනය",
+  "readerAddToCollection": "එකතුවට එක් කරන්න",
+  "readerMyTranslation": "මගේ පරිවර්තනය",
+  "readerHideMyTranslation": "මගේ පරිවර්තනය සඟවන්න",
+  "readerAddAnnotation": "විවරණයක් එක් කරන්න",
+  "readerShowCommentary": "අට්ඨකථා පෙන්වන්න",
+  "readerHideCommentary": "අට්ඨකථා සඟවන්න",
+  "readerBookmark": "පොත්සලකුණ",
+  "readerRemoveBookmark": "පොත්සලකුණ ඉවත් කරන්න",
+  "readerNotes": "සටහන්",
+  "readerSmaller": "කුඩා",
+  "readerLarger": "විශාල",
+  "readerSwitchToScroll": "අනුචලනයට මාරු වන්න",
+  "readerSwitchToPages": "පිටු වලට මාරු වන්න",
+  "readerSingleView": "තනි දසුන",
+  "readerSideBySide": "පැත්තෙන් පැත්ත (පාළි)",
+  "readerPrevSutta": "පෙර සූත්‍රය",
+  "readerNextSutta": "ඊළඟ සූත්‍රය",
+  "readerPrevPage": "පෙර පිටුව",
+  "readerNextPage": "ඊළඟ පිටුව",
+  "readerPageOf": "{total} න් {current}",
+  "@readerPageOf": {
+    "placeholders": {
+      "current": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "readerPrevious": "පෙර",
+  "readerNext": "ඊළඟ",
+  "readerSuttaNotFound": "සූත්‍රය හමු නොවීය.\nකරුණාකර පළමුව අන්තර්ගත පැකේජය බාගන්න.",
+  "readerHighlightNote": "උද්දීපන සටහන",
+  "readerWriteNoteHint": "ඔබේ සටහන මෙහි ලියන්න\u2026",
+  "readerEdit": "සංස්කරණය",
+  "readerShare": "බෙදාගන්න",
+  "readerDelete": "මකන්න",
+
+  "dictionaryTitle": "පාළි ශබ්දකෝෂය",
+  "dictionarySearchHint": "පාළි වචන සොයන්න\u2026",
+  "dictionaryEnterWord": "සෙවීමට පාළි වචනයක් ඇතුළත් කරන්න",
+  "dictionaryNoResults": "ප්‍රතිඵල හමු නොවීය",
+  "dictionarySeeAlso": "මෙයද බලන්න: ",
+
+  "communityTitle": "ප්‍රජා පැකේජ",
+  "communityNewest": "නවතම පළමුව",
+  "communityMostDownloaded": "වැඩිපුරම බාගත",
+  "communityAll": "සියල්ල",
+  "communityEnglish": "ඉංග්‍රීසි",
+  "communityGerman": "ජර්මන්",
+  "communitySpanish": "ස්පාඤ්ඤ",
+  "communityNoPackages": "පැකේජ හමු නොවීය",
+  "communityBy": "{author} විසින්",
+  "@communityBy": {
+    "placeholders": { "author": {"type": "String"} }
+  },
+  "communityTranslations": "පරිවර්තන {count}",
+  "@communityTranslations": {
+    "placeholders": { "count": {"type": "int"} }
+  },
+
+  "translationsTitle": "මගේ පරිවර්තන",
+  "translationsTab": "පරිවර්තන",
+  "annotationsTab": "විවරණ",
+  "translationsExportAll": "සියල්ල පැකේජයක් ලෙස අපනයනය",
+  "translationsImport": "පැකේජයක් ආයාත කරන්න",
+  "translationsPublish": "ප්‍රජාවට ප්‍රකාශ කරන්න",
+  "translationsEmpty": "තවම පරිවර්තන නැත",
+  "translationsEmptySubtitle": "ඕනෑම සූත්‍රයක් විවෘත කර මෙනුවෙන් \"මගේ පරිවර්තනය\" තෝරන්න.",
+  "annotationsEmpty": "තවම විවරණ නැත",
+  "annotationsEmptySubtitle": "ඕනෑම සූත්‍රයක් විවෘත කර මෙනුවෙන් \"විවරණයක් එක් කරන්න\" තෝරන්න.",
+  "translationsImportTitle": "පැකේජය ආයාත කරන්න",
+  "translationsAuthor": "කතෘ: {author}",
+  "@translationsAuthor": {
+    "placeholders": { "author": {"type": "String"} }
+  },
+  "translationsDescription": "විස්තරය: {desc}",
+  "@translationsDescription": {
+    "placeholders": { "desc": {"type": "String"} }
+  },
+  "translationsCount": "පරිවර්තන: {count}",
+  "@translationsCount": {
+    "placeholders": { "count": {"type": "int"} }
+  },
+  "annotationsCount": "විවරණ: {count}",
+  "@annotationsCount": {
+    "placeholders": { "count": {"type": "int"} }
+  },
+  "translationsMergeNote": "මෙය පැකේජ අන්තර්ගතය ඔබේ පවතින පරිවර්තන සමඟ ඒකාබද්ධ කරයි.",
+  "translationsImported": "පරිවර්තන {translations} ක් සහ විවරණ {commentary} ක් ආයාත කරන ලදී",
+  "@translationsImported": {
+    "placeholders": {
+      "translations": {"type": "int"},
+      "commentary": {"type": "int"}
+    }
+  },
+  "translationsPublishTitle": "ප්‍රජාවට ප්‍රකාශ කරන්න",
+  "translationsPublishTitleLabel": "මාතෘකාව",
+  "translationsPublishTitleHint": "මගේ ධම්ම පරිවර්තන",
+  "translationsPublishAuthorLabel": "කතෘ නම",
+  "translationsPublishDescLabel": "විස්තරය (අමතර)",
+  "translationsPublishTitleRequired": "මාතෘකාව අවශ්‍යයි",
+  "translationsPublished": "ප්‍රජාවට ප්‍රකාශ කරන ලදී!",
+
+  "onboardingHeading": "ධම්ම ඇප්",
+  "onboardingSubtitle": "පාළි ත්‍රිපිටකය, ඔබේ සාක්කුවේ.\nනොමිලේ, සදාකාලිකව.",
+  "onboardingGetStarted": "ආරම්භ කරන්න",
+  "onboardingChooseLanguage": "ඔබේ භාෂාව තෝරන්න",
+  "onboardingChangeLanguageLater": "මෙය පසුව සැකසුම් වලින් වෙනස් කළ හැක",
+  "onboardingContinue": "ඉදිරියට",
+  "onboardingSkipForNow": "දැනට මඟ හරින්න",
+  "onboardingDownloadFirst": "ඔබේ පළමු පැකේජය බාගන්න",
+  "onboardingDownloadHint": "මජ්ඣිම නිකායෙන් ආරම්භ කරන්න \u2014 ධම්මයට හොඳ හැඳින්වීමක්",
+  "onboardingDownloadError": "පැකේජ ලැයිස්තුව පූරණය කළ නොහැක. පසුව පැකේජ බාගත හැක.",
+  "onboardingDownloading": "බාගනිමින්\u2026 {percent}%",
+  "@onboardingDownloading": {
+    "placeholders": { "percent": {"type": "int"} }
+  },
+  "onboardingInstalling": "ස්ථාපනය වෙමින්\u2026",
+  "onboardingDownload": "බාගන්න",
+  "onboardingSkipDownload": "මඟ හරින්න \u2014 පසුව බාගන්න",
+  "onboardingHowToNavigate": "සැරිසැරීම් ආකාරය",
+  "onboardingNavLibrary": "පුස්තකාලය",
+  "onboardingNavLibraryDesc": "නිකාය අනුව පාළි ත්‍රිපිටකය බ්‍රවුස් කරන්න \u2014 දීඝ සිට ඛුද්දක දක්වා.",
+  "onboardingNavSearch": "සොයන්න",
+  "onboardingNavSearchDesc": "ඕනෑම සූත්‍රයක් මූල පදය, මාතෘකාව, හෝ වාක්‍ය ඛණ්ඩය මඟින් සොයන්න.",
+  "onboardingNavDaily": "දෛනික",
+  "onboardingNavDailyDesc": "දිනපතා වෙනස් සූත්‍රයක්, සහ ව්‍යුහගත කියවීම් සැලැස්ම්.",
+  "onboardingGotIt": "තේරුණා",
+  "onboardingReady": "ඔබ සූදානම්",
+  "onboardingReadySubtitle": "ඔබේ අධ්‍යයනය ප්‍රඥාවේ\nසහ විමුක්තියේ මූලාශ්‍රයක් වේවා.",
+  "onboardingStartReading": "කියවීම ආරම්භ කරන්න",
+
+  "authCreateAccount": "ගිණුමක් සාදන්න",
+  "authSignIn": "පුරන්න",
+  "authSyncDescription": "ඔබේ පොත්සලකුණු, උද්දීපන,\nසහ සටහන් උපාංග හරහා සමමුහුර්ත කරන්න",
+  "authContinueGoogle": "Google සමඟ ඉදිරියට",
+  "authContinueApple": "Apple සමඟ ඉදිරියට",
+  "authOr": "හෝ",
+  "authEmail": "විද්‍යුත් තැපෑල",
+  "authPassword": "මුරපදය",
+  "authEmailInvalid": "වලංගු විද්‍යුත් තැපෑලක් ඇතුළත් කරන්න",
+  "authPasswordShort": "අවම වශයෙන් අක්ෂර 6 ක්",
+  "authForgotPassword": "මුරපදය අමතකද?",
+  "authAlreadyHaveAccount": "දැනටමත් ගිණුමක් තිබේද? පුරන්න",
+  "authDontHaveAccount": "ගිණුමක් නැද්ද? එකක් සාදන්න",
+  "authContinueWithout": "ගිණුමක් නොමැතිව ඉදිරියට",
+  "authPasswordResetSent": "මුරපද යළි සැකසීමේ විද්‍යුත් තැපෑල යවන ලදී",
+  "authEnterEmailFirst": "පළමුව ඔබේ විද්‍යුත් තැපෑල ඇතුළත් කරන්න",
+
+  "profileTitle": "ගිණුම",
+  "profileSyncNow": "දැන් සමමුහුර්ත කරන්න",
+  "profileLastSynced": "අවසන් වරට සමමුහුර්ත කළේ {time} ට",
+  "@profileLastSynced": {
+    "placeholders": { "time": {"type": "String"} }
+  },
+  "profileTapToSync": "ඔබේ දත්ත සමමුහුර්ත කිරීමට තට්ටු කරන්න",
+  "profileSyncing": "සමමුහුර්ත වෙමින්...",
+  "profileSyncCompleted": "සමමුහුර්තය සම්පූර්ණයි",
+  "profileSyncFailed": "සමහර වගු අසාර්ථකයි \u2014 නැවත උත්සාහ කිරීමට තට්ටු කරන්න",
+  "profileSignOut": "වරන්න",
+
+  "audioTitle": "ශ්‍රව්‍ය",
+  "audioChanting": "ස්වරය",
+  "audioChantingSubtitle": "පාළි ස්වර හා පාරායණ",
+  "audioGuidedMeditation": "මඟ පෙන්වන භාවනා",
+  "audioGuidedMeditationSubtitle": "මෙත්තා, ආනාපානසති, කායානුපස්සනා සහ තවත්",
+  "audioDhammaTalks": "ධම්ම දේශනා",
+  "audioDhammaTalksSubtitle": "ගෞරවනීය භික්ෂූන්ගේ ඉගැන්වීම්",
+  "audioUnguided": "මඟ නොපෙන්වන ටයිමරය",
+  "audioUnguidedDesc": "ආරම්භයේ සහ අවසානයේ සීනුවක් සමඟ නිහඬව වාඩි වන්න.",
+  "audioMinutes": "මිනි. {mins}",
+  "@audioMinutes": {
+    "placeholders": { "mins": {"type": "int"} }
+  },
+  "audioDone": "හරි",
+  "audioClose": "වසන්න",
+  "audioEndEarly": "කලින් අවසන් කරන්න",
+  "audioOpenSutta": "සූත්‍රය විවෘත කරන්න",
+  "audioPlayAll": "සියල්ල වාදනය",
+
+  "studyBookmarks": "පොත්සලකුණු",
+  "studyHighlights": "උද්දීපන",
+  "studyNotes": "සටහන්",
+  "studyCollections": "එකතු",
+  "studyTranslations": "පරිවර්තන",
+  "studyDictionary": "ශබ්දකෝෂය",
+  "studyCommunity": "ප්‍රජාව",
+
+  "cancel": "අවලංගු",
+  "save": "සුරකින්න",
+  "delete": "මකන්න",
+  "import_": "ආයාත",
+  "publish": "ප්‍රකාශ",
+  "error": "දෝෂය: {message}",
+  "@error": {
+    "placeholders": { "message": {"type": "String"} }
+  },
+  "exportFailed": "අපනයනය අසාර්ථකයි: {message}",
+  "@exportFailed": {
+    "placeholders": { "message": {"type": "String"} }
+  },
+  "importFailed": "ආයාතය අසාර්ථකයි: {message}",
+  "@importFailed": {
+    "placeholders": { "message": {"type": "String"} }
+  },
+  "publishFailed": "ප්‍රකාශනය අසාර්ථකයි: {message}",
+  "@publishFailed": {
+    "placeholders": { "message": {"type": "String"} }
+  },
+  "notDownloaded": "බාගත කර නැත",
+  "filter": "පෙරහන"
+}

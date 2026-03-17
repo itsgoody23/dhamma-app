@@ -21,6 +21,7 @@ class SearchDao extends DatabaseAccessor<AppDatabase> with _$SearchDaoMixin {
     String? nikaya,
     String? translator,
     int limit = 50,
+    int offset = 0,
   }) async {
     if (rawQuery.trim().isEmpty) return [];
 
@@ -45,6 +46,7 @@ class SearchDao extends DatabaseAccessor<AppDatabase> with _$SearchDaoMixin {
     }
 
     args.add(limit);
+    args.add(offset);
 
     final sql = '''
       SELECT
@@ -61,7 +63,7 @@ class SearchDao extends DatabaseAccessor<AppDatabase> with _$SearchDaoMixin {
       JOIN texts t ON t.id = texts_fts.rowid
       WHERE texts_fts MATCH ?$filterClauses
       ORDER BY rank
-      LIMIT ?
+      LIMIT ? OFFSET ?
     ''';
 
     final rows = await customSelect(

@@ -96,6 +96,51 @@ class TextsDao extends DatabaseAccessor<AppDatabase> with _$TextsDaoMixin {
     return rows;
   }
 
+  /// Fetch multiple suttas by a list of UIDs, in order, for a given language.
+  Future<List<SuttaText>> getSuttasByUidList(
+    List<String> uids,
+    String language,
+  ) async {
+    if (uids.isEmpty) return [];
+    final rows = await (select(texts)
+          ..where((t) => t.uid.isIn(uids) & t.language.equals(language))
+          ..orderBy([(t) => OrderingTerm.asc(t.uid)]))
+        .get();
+    // Re-sort by the original uid order (numeric within prefix).
+    final order = {for (var i = 0; i < uids.length; i++) uids[i]: i};
+    rows.sort((a, b) => (order[a.uid] ?? 0).compareTo(order[b.uid] ?? 0));
+    return rows;
+  }
+
+  /// Returns (previousUid, nextUid) for navigation within the same nikaya.
+  Future<(String?, String?)> getAdjacentUids(
+    String uid,
+    String language,
+  ) async {
+    final current = await getSuttaByUid(uid, language);
+    final nikaya = current?.nikaya;
+    if (nikaya == null) return (null, null);
+
+    final prev = await customSelect(
+      'SELECT uid FROM texts WHERE nikaya = ? AND language = ? AND uid < ? '
+      'ORDER BY uid DESC LIMIT 1',
+      variables: [Variable(nikaya), Variable(language), Variable(uid)],
+      readsFrom: {texts},
+    ).getSingleOrNull();
+
+    final next = await customSelect(
+      'SELECT uid FROM texts WHERE nikaya = ? AND language = ? AND uid > ? '
+      'ORDER BY uid ASC LIMIT 1',
+      variables: [Variable(nikaya), Variable(language), Variable(uid)],
+      readsFrom: {texts},
+    ).getSingleOrNull();
+
+    return (
+      prev?.read<String>('uid'),
+      next?.read<String>('uid'),
+    );
+  }
+
   /// Count of suttas per nikaya for a language — used for progress rings.
   Future<int> countSuttasInNikaya(String nikaya, String language) async {
     final count = texts.id.count();

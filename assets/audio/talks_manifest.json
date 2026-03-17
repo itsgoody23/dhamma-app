@@ -1,0 +1,308 @@
+{
+  "collections": [
+    {
+      "id": "basics",
+      "title": "Basics — 50 Essential Talks",
+      "teacher": "Ṭhānissaro Bhikkhu",
+      "description": "Foundation teachings on meditation and the Dhamma",
+      "tracks": [
+        {
+          "id": "basics-01",
+          "title": "Strength from the Basics",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/basics_collection/01%20Strength%20from%20the%20Basics.mp3"
+        },
+        {
+          "id": "basics-02",
+          "title": "A Mind Full of Goodwill",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/basics_collection/02%20A%20Mind%20Full%20of%20Goodwill.mp3"
+        },
+        {
+          "id": "basics-03",
+          "title": "Breath Meditation",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/basics_collection/03%20Breath%20Meditation.mp3"
+        },
+        {
+          "id": "basics-04",
+          "title": "Right Effort",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/basics_collection/04%20Right%20Effort.mp3"
+        },
+        {
+          "id": "basics-05",
+          "title": "Meditation as a Skill",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/basics_collection/05%20Meditation%20as%20a%20Skill.mp3"
+        }
+      ]
+    },
+    {
+      "id": "eightfold-path",
+      "title": "The Noble Eightfold Path",
+      "teacher": "Ṭhānissaro Bhikkhu",
+      "description": "13 talks covering each factor of the path",
+      "tracks": [
+        {
+          "id": "8fold-01",
+          "title": "An Introduction to the Path",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 840,
+          "url": "https://www.dhammatalks.org/Archive/TheEightfoldPath/01%20An%20Introduction%20to%20the%20Path.mp3"
+        },
+        {
+          "id": "8fold-02",
+          "title": "Right View",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 840,
+          "url": "https://www.dhammatalks.org/Archive/TheEightfoldPath/02%20Right%20View.mp3"
+        },
+        {
+          "id": "8fold-03",
+          "title": "Right Resolve",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 840,
+          "url": "https://www.dhammatalks.org/Archive/TheEightfoldPath/03%20Right%20Resolve.mp3"
+        },
+        {
+          "id": "8fold-04",
+          "title": "Right Speech",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 840,
+          "url": "https://www.dhammatalks.org/Archive/TheEightfoldPath/04%20Right%20Speech.mp3"
+        },
+        {
+          "id": "8fold-05",
+          "title": "Right Action",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 840,
+          "url": "https://www.dhammatalks.org/Archive/TheEightfoldPath/05%20Right%20Action.mp3"
+        },
+        {
+          "id": "8fold-06",
+          "title": "Right Livelihood",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 840,
+          "url": "https://www.dhammatalks.org/Archive/TheEightfoldPath/06%20Right%20Livelihood.mp3"
+        },
+        {
+          "id": "8fold-07",
+          "title": "Right Effort",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 840,
+          "url": "https://www.dhammatalks.org/Archive/TheEightfoldPath/07%20Right%20Effort.mp3"
+        },
+        {
+          "id": "8fold-08",
+          "title": "Right Mindfulness — Introduction",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 840,
+          "url": "https://www.dhammatalks.org/Archive/TheEightfoldPath/08%20Right%20Mindfulness%20-%20Intro.mp3"
+        }
+      ]
+    },
+    {
+      "id": "seven-factors",
+      "title": "The Seven Factors for Awakening",
+      "teacher": "Ṭhānissaro Bhikkhu",
+      "description": "Seven qualities that lead to awakening",
+      "tracks": [
+        {
+          "id": "7fac-01",
+          "title": "Mindfulness",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/seven_factors/01%20Mindfulness.mp3"
+        },
+        {
+          "id": "7fac-02",
+          "title": "Analysis of Qualities",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/seven_factors/02%20Analysis%20of%20Qualities.mp3"
+        },
+        {
+          "id": "7fac-03",
+          "title": "Persistence",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/seven_factors/03%20Persistence.mp3"
+        },
+        {
+          "id": "7fac-04",
+          "title": "Rapture",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/seven_factors/04%20Rapture.mp3"
+        },
+        {
+          "id": "7fac-05",
+          "title": "Calm",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/seven_factors/05%20Calm.mp3"
+        },
+        {
+          "id": "7fac-06",
+          "title": "Concentration",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/seven_factors/06%20Concentration.mp3"
+        },
+        {
+          "id": "7fac-07",
+          "title": "Equanimity",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/seven_factors/07%20Equanimity.mp3"
+        }
+      ]
+    },
+    {
+      "id": "five-strengths",
+      "title": "The Five Strengths",
+      "teacher": "Ṭhānissaro Bhikkhu",
+      "description": "Conviction, persistence, mindfulness, concentration, discernment",
+      "tracks": [
+        {
+          "id": "5str-01",
+          "title": "Conviction",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/five_strengths/01%20Conviction.mp3"
+        },
+        {
+          "id": "5str-02",
+          "title": "Persistence",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/five_strengths/02%20Persistence.mp3"
+        },
+        {
+          "id": "5str-03",
+          "title": "Mindfulness",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/five_strengths/03%20Mindfulness.mp3"
+        },
+        {
+          "id": "5str-04",
+          "title": "Concentration",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/five_strengths/04%20Concentration.mp3"
+        },
+        {
+          "id": "5str-05",
+          "title": "Discernment",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 720,
+          "url": "https://www.dhammatalks.org/Archive/five_strengths/05%20Discernment.mp3"
+        }
+      ]
+    },
+    {
+      "id": "short-talks-recent",
+      "title": "Short Morning Talks (Recent)",
+      "teacher": "Ṭhānissaro Bhikkhu",
+      "description": "3-5 minute morning reflections",
+      "tracks": [
+        {
+          "id": "short-260208",
+          "title": "High-level Goodwill",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 300,
+          "url": "https://www.dhammatalks.org/Archive/shorttalks/y2026/260208(short)_High-level_Goodwill.mp3"
+        },
+        {
+          "id": "short-260207",
+          "title": "Generosity & Gratitude",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 300,
+          "url": "https://www.dhammatalks.org/Archive/shorttalks/y2026/260207(short)_Generosity_&_Gratitude.mp3"
+        },
+        {
+          "id": "short-260206",
+          "title": "Wise Control",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 300,
+          "url": "https://www.dhammatalks.org/Archive/shorttalks/y2026/260206(short)_Wise_Control.mp3"
+        },
+        {
+          "id": "short-260205",
+          "title": "Again & Again",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 300,
+          "url": "https://www.dhammatalks.org/Archive/shorttalks/y2026/260205(short)_Again_&_Again.mp3"
+        },
+        {
+          "id": "short-260204",
+          "title": "Bathed in the Breath",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 300,
+          "url": "https://www.dhammatalks.org/Archive/shorttalks/y2026/260204(short)_Bathed_in_the_Breath.mp3"
+        },
+        {
+          "id": "short-260131",
+          "title": "For the Sake of the Heart",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 300,
+          "url": "https://www.dhammatalks.org/Archive/shorttalks/y2026/260131(short)_For_the_Sake_of_the_Heart.mp3"
+        },
+        {
+          "id": "short-260130",
+          "title": "Metacognition",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 300,
+          "url": "https://www.dhammatalks.org/Archive/shorttalks/y2026/260130(short)_Metacognition.mp3"
+        },
+        {
+          "id": "short-260129",
+          "title": "Building the Path",
+          "type": "talk",
+          "teacher": "Ṭhānissaro Bhikkhu",
+          "duration_seconds": 300,
+          "url": "https://www.dhammatalks.org/Archive/shorttalks/y2026/260129(short)_Building_the_Path.mp3"
+        }
+      ]
+    }
+  ]
+}

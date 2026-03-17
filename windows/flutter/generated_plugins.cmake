@@ -5,6 +5,8 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   connectivity_plus
+  flutter_inappwebview_windows
+  just_audio_windows
   share_plus
   sqlite3_flutter_libs
   url_launcher_windows

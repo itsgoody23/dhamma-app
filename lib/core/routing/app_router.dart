@@ -13,7 +13,17 @@ import '../../features/study_tools/study_tools_screen.dart';
 import '../../features/downloads/downloads_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/profile_screen.dart';
+import '../../features/collections/collections_screen.dart';
+import '../../features/collections/collection_detail_screen.dart';
+import '../../features/audio/audio_browse_screen.dart';
+import '../../features/audio/chanting_screen.dart';
+import '../../features/audio/meditation_screen.dart';
+import '../../features/audio/dhamma_talks_screen.dart';
 import '../../features/settings/settings_screen.dart';
+import '../../features/translations/my_translations_screen.dart';
+import '../../features/dictionary/dictionary_screen.dart';
+import '../../features/community/browse_packages_screen.dart';
+import '../../features/community/package_detail_screen.dart';
 import '../../shared/widgets/main_shell.dart';
 import 'routes.dart';
 
@@ -84,6 +94,12 @@ GoRouter appRouter(Ref ref) {
           ]),
           StatefulShellBranch(routes: [
             GoRoute(
+              path: Routes.audio,
+              builder: (context, state) => const AudioBrowseScreen(),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
               path: Routes.study,
               builder: (context, state) => const StudyToolsScreen(),
             ),
@@ -102,6 +118,48 @@ GoRouter appRouter(Ref ref) {
         builder: (context, state) => ReaderScreen(
           uid: state.pathParameters['uid']!,
           language: state.uri.queryParameters['lang'] ?? 'en',
+          scrollTo: int.tryParse(
+              state.uri.queryParameters['scrollTo'] ?? ''),
+        ),
+      ),
+      GoRoute(
+        path: Routes.chanting,
+        builder: (context, state) => const ChantingScreen(),
+      ),
+      GoRoute(
+        path: Routes.meditation,
+        builder: (context, state) => const MeditationScreen(),
+      ),
+      GoRoute(
+        path: Routes.dhammaTalks,
+        builder: (context, state) => const DhammaTalksScreen(),
+      ),
+      GoRoute(
+        path: Routes.collections,
+        builder: (context, state) => const CollectionsScreen(),
+      ),
+      GoRoute(
+        path: Routes.collectionDetail,
+        builder: (context, state) => CollectionDetailScreen(
+          collectionId: int.parse(state.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: Routes.myTranslations,
+        builder: (context, state) => const MyTranslationsScreen(),
+      ),
+      GoRoute(
+        path: Routes.dictionary,
+        builder: (context, state) => const DictionaryScreen(),
+      ),
+      GoRoute(
+        path: Routes.communityPackages,
+        builder: (context, state) => const BrowsePackagesScreen(),
+      ),
+      GoRoute(
+        path: Routes.packageDetail,
+        builder: (context, state) => PackageDetailScreen(
+          packageId: int.parse(state.pathParameters['id']!),
         ),
       ),
       GoRoute(

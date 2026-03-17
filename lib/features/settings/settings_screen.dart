@@ -5,8 +5,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/extensions/l10n_extension.dart';
 import '../../core/routing/routes.dart';
 import '../../shared/providers/auth_provider.dart';
+import '../../shared/providers/notification_provider.dart';
 import '../../shared/providers/preferences_provider.dart';
 
 // Note: add url_launcher: ^6.3.0 to pubspec.yaml
@@ -21,39 +23,61 @@ class SettingsScreen extends ConsumerWidget {
     final language = ref.watch(readerLanguageProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(context.l10n.settingsTitle)),
       body: ListView(
         children: [
           // ── Reading ───────────────────────────────────────────────────────
-          const _SectionHeader(title: 'Reading'),
+          _SectionHeader(title: context.l10n.settingsReading),
           ListTile(
-            title: const Text('Theme'),
-            subtitle: Text(_themeName(themeMode)),
+            title: Text(context.l10n.settingsTheme),
+            subtitle: Text(_themeName(context, themeMode)),
             leading: const Icon(Icons.brightness_6_outlined),
             onTap: () => _pickTheme(context, ref),
           ),
           ListTile(
-            title: const Text('Font size'),
-            subtitle: Text(_fontSizeName(fontSize)),
+            title: Text(context.l10n.settingsFontSize),
+            subtitle: Text(_fontSizeName(context, fontSize)),
             leading: const Icon(Icons.format_size_outlined),
             onTap: () => _pickFontSize(context, ref),
           ),
+          Consumer(builder: (context, ref, _) {
+            final lineSpacing = ref.watch(readerLineSpacingProvider);
+            return ListTile(
+              title: Text(context.l10n.settingsLineSpacing),
+              subtitle: Text(_lineSpacingName(context, lineSpacing)),
+              leading: const Icon(Icons.format_line_spacing_outlined),
+              onTap: () => _pickLineSpacing(context, ref),
+            );
+          }),
           ListTile(
-            title: const Text('Default language'),
+            title: Text(context.l10n.settingsDefaultLanguage),
             subtitle: Text(language.toUpperCase()),
             leading: const Icon(Icons.language_outlined),
             onTap: () => _pickLanguage(context, ref),
           ),
+          Consumer(builder: (context, ref, _) {
+            final appLocale = ref.watch(appLocaleProvider);
+            return ListTile(
+              title: Text(context.l10n.settingsAppLanguage),
+              subtitle: Text(context.l10n.settingsAppLanguageSubtitle),
+              trailing: Text(
+                _appLocaleName(appLocale),
+                style: const TextStyle(color: AppColors.green),
+              ),
+              leading: const Icon(Icons.translate_outlined),
+              onTap: () => _pickAppLocale(context, ref),
+            );
+          }),
 
           const Divider(),
 
           // ── Downloads ─────────────────────────────────────────────────────
-          const _SectionHeader(title: 'Downloads'),
+          _SectionHeader(title: context.l10n.settingsDownloads),
           Consumer(builder: (context, ref, _) {
             final wifiOnly = ref.watch(wifiOnlyProvider);
             return SwitchListTile(
-              title: const Text('Wi-Fi only downloads'),
-              subtitle: const Text('Prevents downloads on mobile data'),
+              title: Text(context.l10n.settingsWifiOnly),
+              subtitle: Text(context.l10n.settingsWifiOnlySubtitle),
               secondary: const Icon(Icons.wifi_outlined),
               value: wifiOnly,
               activeTrackColor: AppColors.green,
@@ -61,25 +85,78 @@ class SettingsScreen extends ConsumerWidget {
             );
           }),
 
+          Consumer(builder: (context, ref, _) {
+            final audioMobile = ref.watch(audioMobileDataProvider);
+            return SwitchListTile(
+              title: Text(context.l10n.settingsAudioMobileData),
+              subtitle: Text(context.l10n.settingsAudioMobileDataSubtitle),
+              secondary: const Icon(Icons.headphones_outlined),
+              value: audioMobile,
+              activeTrackColor: AppColors.green,
+              onChanged: (v) =>
+                  ref.read(audioMobileDataProvider.notifier).set(v),
+            );
+          }),
+
+          const Divider(),
+
+          // ── Notifications ─────────────────────────────────────────────────
+          const _SectionHeader(title: 'Notifications'),
+          Consumer(builder: (context, ref, _) {
+            final enabled = ref.watch(dailyReminderEnabledProvider);
+            return SwitchListTile(
+              title: const Text('Daily sutta reminder'),
+              subtitle: const Text('Get reminded to read every day'),
+              secondary: const Icon(Icons.notifications_outlined),
+              value: enabled,
+              activeTrackColor: AppColors.green,
+              onChanged: (v) =>
+                  ref.read(dailyReminderEnabledProvider.notifier).set(v),
+            );
+          }),
+          Consumer(builder: (context, ref, _) {
+            final enabled = ref.watch(dailyReminderEnabledProvider);
+            final time = ref.watch(dailyReminderTimeProvider);
+            return ListTile(
+              title: const Text('Reminder time'),
+              subtitle: Text(time.format(context)),
+              leading: const Icon(Icons.access_time_outlined),
+              enabled: enabled,
+              onTap: enabled
+                  ? () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: time,
+                      );
+                      if (picked != null) {
+                        ref
+                            .read(dailyReminderTimeProvider.notifier)
+                            .setTime(picked);
+                      }
+                    }
+                  : null,
+            );
+          }),
+
           const Divider(),
 
           // ── Account ─────────────────────────────────────────────────────
-          const _SectionHeader(title: 'Account'),
+          _SectionHeader(title: context.l10n.settingsAccount),
           Consumer(builder: (context, ref, _) {
             final user = ref.watch(currentUserProvider);
             if (user != null) {
               return Column(children: [
                 ListTile(
                   title: Text(user.email ?? 'Signed in'),
-                  subtitle: const Text('Manage account'),
+                  subtitle: Text(context.l10n.settingsManageAccount),
                   leading: const Icon(Icons.person_outlined),
                   onTap: () => context.push(Routes.profile),
                 ),
                 Consumer(builder: (context, ref, _) {
                   final wifiOnlySync = ref.watch(wifiOnlySyncProvider);
                   return SwitchListTile(
-                    title: const Text('Sync on Wi-Fi only'),
-                    subtitle: const Text('Prevents sync on mobile data'),
+                    title: Text(context.l10n.settingsSyncWifiOnly),
+                    subtitle: Text(context.l10n.settingsSyncWifiOnlySubtitle),
                     secondary: const Icon(Icons.sync_outlined),
                     value: wifiOnlySync,
                     activeTrackColor: AppColors.green,
@@ -90,8 +167,8 @@ class SettingsScreen extends ConsumerWidget {
               ]);
             }
             return ListTile(
-              title: const Text('Sign in'),
-              subtitle: const Text('Sync your progress across devices'),
+              title: Text(context.l10n.settingsSignIn),
+              subtitle: Text(context.l10n.settingsSignInSubtitle),
               leading: const Icon(Icons.login_outlined),
               onTap: () => context.push(Routes.login),
             );
@@ -100,9 +177,9 @@ class SettingsScreen extends ConsumerWidget {
           const Divider(),
 
           // ── About ─────────────────────────────────────────────────────────
-          const _SectionHeader(title: 'About'),
+          _SectionHeader(title: context.l10n.settingsAbout),
           ListTile(
-            title: const Text('Licences'),
+            title: Text(context.l10n.settingsLicences),
             leading: const Icon(Icons.gavel_outlined),
             onTap: () => showLicensePage(
                 context: context, applicationName: 'Dhamma App'),
@@ -120,40 +197,82 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => launchUrl(Uri.parse('https://accesstoinsight.org')),
           ),
           ListTile(
-            title: const Text('Source code'),
+            title: Text(context.l10n.settingsSourceCode),
             subtitle: const Text('MIT / Apache 2.0 — github.com/dhamma-app'),
             leading: const Icon(Icons.code_outlined),
             onTap: () => launchUrl(Uri.parse('https://github.com/dhamma-app')),
           ),
-          const ListTile(
-            title: Text('Version'),
-            subtitle: Text('1.0.0'),
-            leading: Icon(Icons.info_outline),
+          ListTile(
+            title: Text(context.l10n.settingsVersion),
+            subtitle: const Text('1.0.0'),
+            leading: const Icon(Icons.info_outline),
           ),
         ],
       ),
     );
   }
 
-  String _themeName(ThemeMode mode) => switch (mode) {
-        ThemeMode.light => 'Light',
-        ThemeMode.dark => 'Dark',
-        ThemeMode.system => 'System default',
+  String _themeName(BuildContext context, ThemeMode mode) => switch (mode) {
+        ThemeMode.light => context.l10n.settingsThemeLight,
+        ThemeMode.dark => context.l10n.settingsThemeDark,
+        ThemeMode.system => context.l10n.settingsThemeSystem,
       };
 
-  String _fontSizeName(double size) => switch (size) {
-        AppTypography.fontSizeSmall => 'Small',
-        AppTypography.fontSizeMedium => 'Medium',
-        AppTypography.fontSizeLarge => 'Large',
-        AppTypography.fontSizeXL => 'Extra Large',
+  String _fontSizeName(BuildContext context, double size) => switch (size) {
+        AppTypography.fontSizeSmall => context.l10n.settingsFontSmall,
+        AppTypography.fontSizeMedium => context.l10n.settingsFontMedium,
+        AppTypography.fontSizeLarge => context.l10n.settingsFontLarge,
+        AppTypography.fontSizeXL => context.l10n.settingsFontXL,
         _ => '${size.round()}pt',
       };
+
+  String _lineSpacingName(BuildContext context, double spacing) =>
+      switch (spacing) {
+        1.4 => context.l10n.settingsLineCompact,
+        1.7 => context.l10n.settingsLineNormal,
+        2.0 => context.l10n.settingsLineRelaxed,
+        _ => '${spacing}x',
+      };
+
+  void _pickLineSpacing(BuildContext context, WidgetRef ref) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(context.l10n.settingsLineSpacing),
+        children: [
+          RadioGroup<double>(
+            groupValue: ref.read(readerLineSpacingProvider),
+            onChanged: (v) {
+              if (v != null) {
+                ref
+                    .read(readerLineSpacingProvider.notifier)
+                    .setLineSpacing(v);
+              }
+              Navigator.pop(ctx);
+            },
+            child: Column(
+              children: ReaderLineSpacingNotifier.options
+                  .asMap()
+                  .entries
+                  .map((e) => RadioListTile<double>(
+                        title: Text(ReaderLineSpacingNotifier.labels[e.key]),
+                        subtitle: Text('${e.value}x'),
+                        value: e.value,
+                        activeColor: AppColors.green,
+                      ))
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _pickTheme(BuildContext context, WidgetRef ref) {
     showDialog<void>(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: const Text('Theme'),
+        title: Text(context.l10n.settingsTheme),
         children: [
           RadioGroup<ThemeMode>(
             groupValue: ref.read(themeModeProvider),
@@ -166,7 +285,7 @@ class SettingsScreen extends ConsumerWidget {
             child: Column(
               children: ThemeMode.values
                   .map((mode) => RadioListTile<ThemeMode>(
-                        title: Text(_themeName(mode)),
+                        title: Text(_themeName(context, mode)),
                         value: mode,
                         activeColor: AppColors.green,
                       ))
@@ -182,7 +301,7 @@ class SettingsScreen extends ConsumerWidget {
     showDialog<void>(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: const Text('Font size'),
+        title: Text(context.l10n.settingsFontSize),
         children: [
           RadioGroup<double>(
             groupValue: ref.read(readerFontSizeProvider),
@@ -209,6 +328,50 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+  String _appLocaleName(Locale? locale) => switch (locale?.languageCode) {
+        'en' => 'English',
+        'de' => 'Deutsch',
+        'fr' => 'Français',
+        'es' => 'Español',
+        'si' => 'සිංහල',
+        _ => 'System',
+      };
+
+  void _pickAppLocale(BuildContext context, WidgetRef ref) {
+    const locales = [
+      (null, 'System'),
+      (Locale('en'), 'English'),
+      (Locale('de'), 'Deutsch'),
+      (Locale('fr'), 'Français'),
+      (Locale('es'), 'Español'),
+      (Locale('si'), 'සිංහල'),
+    ];
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(context.l10n.settingsAppLanguage),
+        children: [
+          RadioGroup<Locale?>(
+            groupValue: ref.read(appLocaleProvider),
+            onChanged: (v) {
+              ref.read(appLocaleProvider.notifier).setLocale(v);
+              Navigator.pop(ctx);
+            },
+            child: Column(
+              children: locales
+                  .map((entry) => RadioListTile<Locale?>(
+                        title: Text(entry.$2),
+                        value: entry.$1,
+                        activeColor: AppColors.green,
+                      ))
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _pickLanguage(BuildContext context, WidgetRef ref) {
     const languages = [
       ('en', 'English'),
@@ -219,7 +382,7 @@ class SettingsScreen extends ConsumerWidget {
     showDialog<void>(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: const Text('Default language'),
+        title: Text(context.l10n.settingsDefaultLanguage),
         children: [
           RadioGroup<String>(
             groupValue: ref.read(readerLanguageProvider),

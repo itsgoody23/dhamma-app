@@ -4,12 +4,16 @@ class ReadingPlan {
     required this.title,
     required this.description,
     required this.days,
+    this.category,
+    this.difficulty,
   });
 
   final String id;
   final String title;
   final String description;
   final List<ReadingPlanDay> days;
+  final String? category;
+  final String? difficulty;
 
   factory ReadingPlan.fromJson(Map<String, dynamic> json) => ReadingPlan(
         id: json['id'] as String,
@@ -18,6 +22,8 @@ class ReadingPlan {
         days: (json['days'] as List)
             .map((d) => ReadingPlanDay.fromJson(d as Map<String, dynamic>))
             .toList(),
+        category: json['category'] as String?,
+        difficulty: json['difficulty'] as String?,
       );
 
   int get totalDays => days.length;

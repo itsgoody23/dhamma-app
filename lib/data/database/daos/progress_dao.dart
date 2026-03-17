@@ -78,4 +78,48 @@ class ProgressDao extends DatabaseAccessor<AppDatabase>
           ..limit(limit))
         .get();
   }
+
+  /// Recently-read items with sutta title and nikaya (avoids N+1 lookups).
+  Future<List<RecentlyReadItem>> getRecentlyReadWithTitles(
+      {int limit = 5}) async {
+    final rows = await customSelect(
+      '''
+      SELECT up.text_uid, up.last_position, up.completed,
+             t.title, t.nikaya
+      FROM user_progress up
+      JOIN texts t ON t.uid = up.text_uid
+      WHERE up.is_deleted = 0
+      GROUP BY up.text_uid
+      ORDER BY up.last_read_at DESC
+      LIMIT ?
+      ''',
+      variables: [Variable(limit)],
+      readsFrom: {userProgress},
+    ).get();
+    return rows
+        .map((r) => RecentlyReadItem(
+              textUid: r.read<String>('text_uid'),
+              title: r.read<String>('title'),
+              nikaya: r.read<String>('nikaya'),
+              lastPosition: r.read<int>('last_position'),
+              completed: r.read<bool>('completed'),
+            ))
+        .toList();
+  }
+}
+
+class RecentlyReadItem {
+  const RecentlyReadItem({
+    required this.textUid,
+    required this.title,
+    required this.nikaya,
+    required this.lastPosition,
+    required this.completed,
+  });
+
+  final String textUid;
+  final String title;
+  final String nikaya;
+  final int lastPosition;
+  final bool completed;
 }

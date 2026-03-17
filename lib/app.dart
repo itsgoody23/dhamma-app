@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -15,14 +18,22 @@ class DhammaApp extends ConsumerStatefulWidget {
 
 class _DhammaAppState extends ConsumerState<DhammaApp>
     with WidgetsBindingObserver {
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+      if (results.any((r) => r != ConnectivityResult.none)) {
+        _triggerSync();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _connectivitySub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -43,10 +54,18 @@ class _DhammaAppState extends ConsumerState<DhammaApp>
 
     ref.read(syncStatusProvider.notifier).set(SyncStatus.syncing);
     try {
-      await syncService.syncAll();
-      ref.read(syncStatusProvider.notifier).set(SyncStatus.success);
+      final results = await syncService.syncAll();
+      final errors = <String, String>{};
+      for (final r in results) {
+        if (!r.ok) errors[r.table] = r.error!;
+      }
+      ref.read(syncErrorsProvider.notifier).set(errors);
+      ref.read(syncStatusProvider.notifier).set(
+            errors.isEmpty ? SyncStatus.success : SyncStatus.error,
+          );
       ref.read(lastSyncTimeProvider.notifier).set(DateTime.now());
-    } catch (_) {
+    } catch (e) {
+      ref.read(syncErrorsProvider.notifier).set({'sync': e.toString()});
       ref.read(syncStatusProvider.notifier).set(SyncStatus.error);
     }
   }
@@ -55,6 +74,7 @@ class _DhammaAppState extends ConsumerState<DhammaApp>
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final appLocale = ref.watch(appLocaleProvider);
 
     // Trigger initial sync after sign-in
     ref.listen(currentUserProvider, (prev, next) {
@@ -69,6 +89,9 @@ class _DhammaAppState extends ConsumerState<DhammaApp>
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
+      locale: appLocale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       routerConfig: router,
     );
   }

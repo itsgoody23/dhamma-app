@@ -4,9 +4,21 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
+import '../../core/extensions/l10n_extension.dart';
 import '../../core/routing/routes.dart';
 import '../../data/database/app_database.dart';
 import '../../shared/providers/database_provider.dart';
+import '../collections/collections_screen.dart';
+
+/// Looks up the sutta title for a given UID, returning a formatted string
+/// like "MN 1 — Mūlapariyāya Sutta" or falling back to the raw UID.
+final suttaTitleProvider =
+    FutureProvider.autoDispose.family<String, String>((ref, uid) async {
+  final db = ref.watch(appDatabaseProvider);
+  final sutta = await db.textsDao.getSuttaByUidAnyLanguage(uid);
+  if (sutta == null) return uid;
+  return sutta.title;
+});
 
 class StudyToolsScreen extends ConsumerStatefulWidget {
   const StudyToolsScreen({super.key});
@@ -22,7 +34,7 @@ class _StudyToolsScreenState extends ConsumerState<StudyToolsScreen>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 3, vsync: this);
+    _tabs = TabController(length: 7, vsync: this);
   }
 
   @override
@@ -38,10 +50,15 @@ class _StudyToolsScreenState extends ConsumerState<StudyToolsScreen>
         title: const Text('Study'),
         bottom: TabBar(
           controller: _tabs,
-          tabs: const [
-            Tab(text: 'Bookmarks'),
-            Tab(text: 'Highlights'),
-            Tab(text: 'Notes'),
+          isScrollable: true,
+          tabs: [
+            Tab(text: context.l10n.studyBookmarks),
+            Tab(text: context.l10n.studyHighlights),
+            Tab(text: context.l10n.studyNotes),
+            Tab(text: context.l10n.studyCollections),
+            Tab(text: context.l10n.studyTranslations),
+            Tab(text: context.l10n.studyDictionary),
+            Tab(text: context.l10n.studyCommunity),
           ],
         ),
       ),
@@ -51,6 +68,10 @@ class _StudyToolsScreenState extends ConsumerState<StudyToolsScreen>
           _BookmarksTab(),
           _HighlightsTab(),
           _NotesTab(),
+          _CollectionsTab(),
+          _TranslationsTab(),
+          _DictionaryTab(),
+          _CommunityTab(),
         ],
       ),
     );
@@ -64,17 +85,14 @@ class _BookmarksTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bookmarksAsync = ref.watch(
-      StreamProvider((_) =>
-          ref.watch(appDatabaseProvider).studyToolsDao.watchAllBookmarks()),
-    );
+    final bookmarksAsync = ref.watch(allBookmarksProvider);
 
     return bookmarksAsync.when(
       data: (bookmarks) {
         if (bookmarks.isEmpty) {
           return const _EmptyTab(
             icon: Icons.bookmark_outline,
-            message: 'No bookmarks yet.\nLong-press a sutta to bookmark it.',
+            message: 'No bookmarks yet.\nTap the bookmark icon while reading.',
           );
         }
         return ListView.separated(
@@ -82,7 +100,7 @@ class _BookmarksTab extends ConsumerWidget {
           itemCount: bookmarks.length,
           separatorBuilder: (_, __) => const SizedBox(height: AppSizes.sm),
           itemBuilder: (context, index) =>
-              _BookmarkTile(bookmark: bookmarks[index], ref: ref),
+              _BookmarkTile(bookmark: bookmarks[index]),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -91,14 +109,16 @@ class _BookmarksTab extends ConsumerWidget {
   }
 }
 
-class _BookmarkTile extends StatelessWidget {
-  const _BookmarkTile({required this.bookmark, required this.ref});
+class _BookmarkTile extends ConsumerWidget {
+  const _BookmarkTile({required this.bookmark});
 
   final UserBookmark bookmark;
-  final WidgetRef ref;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final titleAsync = ref.watch(suttaTitleProvider(bookmark.textUid));
+    final title = titleAsync.value ?? bookmark.textUid;
+
     return Dismissible(
       key: Key('bm-${bookmark.id}'),
       direction: DismissDirection.endToStart,
@@ -114,17 +134,17 @@ class _BookmarkTile extends StatelessWidget {
       child: Card(
         child: ListTile(
           leading: const Icon(Icons.bookmark, color: AppColors.green),
-          title: Text(bookmark.textUid),
+          title: Text(title),
           subtitle: bookmark.label.isNotEmpty ? Text(bookmark.label) : null,
           trailing: const Icon(Icons.chevron_right, size: 20),
           onTap: () => context.push(Routes.readerPath(bookmark.textUid)),
-          onLongPress: () => _editLabel(context),
+          onLongPress: () => _editLabel(context, ref),
         ),
       ),
     );
   }
 
-  void _editLabel(BuildContext context) {
+  void _editLabel(BuildContext context, WidgetRef ref) {
     final controller = TextEditingController(text: bookmark.label);
     showDialog<void>(
       context: context,
@@ -160,10 +180,7 @@ class _HighlightsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final highlightsAsync = ref.watch(
-      StreamProvider((_) =>
-          ref.watch(appDatabaseProvider).studyToolsDao.watchAllHighlights()),
-    );
+    final highlightsAsync = ref.watch(allHighlightsProvider);
 
     return highlightsAsync.when(
       data: (highlights) {
@@ -171,7 +188,7 @@ class _HighlightsTab extends ConsumerWidget {
           return const _EmptyTab(
             icon: Icons.highlight_outlined,
             message:
-                'No highlights yet.\nLong-press text in a sutta to highlight it.',
+                'No highlights yet.\nSelect text in a sutta to highlight it.',
           );
         }
         return ListView.separated(
@@ -179,7 +196,7 @@ class _HighlightsTab extends ConsumerWidget {
           itemCount: highlights.length,
           separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, index) =>
-              _HighlightTile(highlight: highlights[index], ref: ref),
+              _HighlightTile(highlight: highlights[index]),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -188,11 +205,10 @@ class _HighlightsTab extends ConsumerWidget {
   }
 }
 
-class _HighlightTile extends StatelessWidget {
-  const _HighlightTile({required this.highlight, required this.ref});
+class _HighlightTile extends ConsumerWidget {
+  const _HighlightTile({required this.highlight});
 
   final UserHighlight highlight;
-  final WidgetRef ref;
 
   Color _parseHex(String hex) {
     final cleaned = hex.replaceFirst('#', '');
@@ -200,7 +216,10 @@ class _HighlightTile extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final titleAsync = ref.watch(suttaTitleProvider(highlight.textUid));
+    final title = titleAsync.value ?? highlight.textUid;
+
     return Dismissible(
       key: Key('hl-${highlight.id}'),
       direction: DismissDirection.endToStart,
@@ -226,15 +245,31 @@ class _HighlightTile extends StatelessWidget {
           ),
         ),
         title: Text(
-          highlight.textUid,
+          title,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        subtitle: Text(
-          'Chars ${highlight.startOffset}–${highlight.endOffset}',
-          style: const TextStyle(fontSize: 12),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (highlight.note != null && highlight.note!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2, bottom: 2),
+                child: Text(
+                  highlight.note!.length > 80
+                      ? '${highlight.note!.substring(0, 80)}…'
+                      : highlight.note!,
+                  style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                ),
+              ),
+            Text(
+              highlight.language.toUpperCase(),
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
         ),
         trailing: const Icon(Icons.chevron_right, size: 20),
-        onTap: () => context.push(Routes.readerPath(highlight.textUid)),
+        onTap: () => context.push(
+            Routes.readerPath(highlight.textUid, scrollTo: highlight.startOffset)),
       ),
     );
   }
@@ -247,24 +282,56 @@ class _NotesTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notesAsync = ref.watch(
-      StreamProvider(
-          (_) => ref.watch(appDatabaseProvider).studyToolsDao.watchAllNotes()),
-    );
+    final notesAsync = ref.watch(allNotesProvider);
+    final hlNotesAsync = ref.watch(highlightNotesProvider);
 
     return notesAsync.when(
       data: (notes) {
-        if (notes.isEmpty) {
+        final hlNotes = hlNotesAsync.value ?? [];
+        if (notes.isEmpty && hlNotes.isEmpty) {
           return const _EmptyTab(
             icon: Icons.edit_note_outlined,
             message: 'No notes yet.\nTap the note icon while reading a sutta.',
           );
         }
-        return ListView.separated(
+
+        final items = <Widget>[];
+
+        // Sutta-level notes
+        if (notes.isNotEmpty) {
+          items.add(const Padding(
+            padding: EdgeInsets.only(bottom: AppSizes.xs),
+            child: Text('SUTTA NOTES',
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8)),
+          ));
+          for (final note in notes) {
+            items.add(_NoteTile(note: note));
+          }
+        }
+
+        // Highlight notes
+        if (hlNotes.isNotEmpty) {
+          items.add(Padding(
+            padding: EdgeInsets.only(
+                top: notes.isNotEmpty ? AppSizes.lg : 0,
+                bottom: AppSizes.xs),
+            child: const Text('HIGHLIGHT NOTES',
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8)),
+          ));
+          for (final hl in hlNotes) {
+            items.add(_HighlightNoteTile(highlight: hl));
+          }
+        }
+
+        return ListView(
           padding: const EdgeInsets.all(AppSizes.md),
-          itemCount: notes.length,
-          separatorBuilder: (_, __) => const SizedBox(height: AppSizes.sm),
-          itemBuilder: (context, index) => _NoteTile(note: notes[index]),
+          children: items,
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -273,40 +340,121 @@ class _NotesTab extends ConsumerWidget {
   }
 }
 
-class _NoteTile extends StatelessWidget {
+class _NoteTile extends ConsumerWidget {
   const _NoteTile({required this.note});
 
   final UserNote note;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final titleAsync = ref.watch(suttaTitleProvider(note.textUid));
+    final title = titleAsync.value ?? note.textUid;
     final excerpt = note.content.length > 120
         ? '${note.content.substring(0, 120)}…'
         : note.content;
 
-    return Card(
-      child: ListTile(
-        title: Text(note.textUid,
-            style: const TextStyle(fontWeight: FontWeight.w700)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(excerpt, style: const TextStyle(fontSize: 13)),
-            const SizedBox(height: 4),
-            Text(
-              _formatDate(note.updatedAt),
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
-            ),
-          ],
+    return Dismissible(
+      key: Key('note-${note.id}'),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: AppSizes.md),
+        color: Colors.red,
+        child: const Icon(Icons.delete, color: Colors.white),
+      ),
+      onDismissed: (_) {
+        ref.read(appDatabaseProvider).studyToolsDao.deleteNote(note.id);
+      },
+      child: Card(
+        child: ListTile(
+          title: Text(title,
+              style: const TextStyle(fontWeight: FontWeight.w700)),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(excerpt, style: const TextStyle(fontSize: 13)),
+              const SizedBox(height: 4),
+              Text(
+                _formatDate(note.updatedAt),
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ],
+          ),
+          trailing: const Icon(Icons.chevron_right, size: 20),
+          onTap: () => context.push(Routes.readerPath(note.textUid)),
         ),
-        trailing: const Icon(Icons.chevron_right, size: 20),
-        onTap: () => context.push(Routes.readerPath(note.textUid)),
       ),
     );
   }
 
   String _formatDate(DateTime dt) {
     return '${dt.day}/${dt.month}/${dt.year}';
+  }
+}
+
+class _HighlightNoteTile extends ConsumerWidget {
+  const _HighlightNoteTile({required this.highlight});
+
+  final UserHighlight highlight;
+
+  Color _parseHex(String hex) {
+    final cleaned = hex.replaceFirst('#', '');
+    return Color(int.parse('FF$cleaned', radix: 16));
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final titleAsync = ref.watch(suttaTitleProvider(highlight.textUid));
+    final title = titleAsync.value ?? highlight.textUid;
+    final note = highlight.note ?? '';
+    final excerpt =
+        note.length > 120 ? '${note.substring(0, 120)}…' : note;
+
+    return Dismissible(
+      key: Key('hl-note-${highlight.id}'),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: AppSizes.md),
+        color: Colors.red,
+        child: const Icon(Icons.delete, color: Colors.white),
+      ),
+      onDismissed: (_) {
+        // Clear the note from the highlight (keeps the highlight itself).
+        ref
+            .read(appDatabaseProvider)
+            .studyToolsDao
+            .updateHighlightNote(highlight.id, '');
+      },
+      child: Card(
+        child: ListTile(
+          leading: Container(
+            width: 16,
+            height: 16,
+            decoration: BoxDecoration(
+              color: _parseHex(highlight.colour),
+              shape: BoxShape.circle,
+            ),
+          ),
+          title: Text(title,
+              style: const TextStyle(fontWeight: FontWeight.w700)),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(excerpt, style: const TextStyle(fontSize: 13)),
+              const SizedBox(height: 4),
+              Text(
+                highlight.language.toUpperCase(),
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ],
+          ),
+          trailing: const Icon(Icons.chevron_right, size: 20),
+          onTap: () => context.push(Routes.readerPath(highlight.textUid,
+              scrollTo: highlight.startOffset)),
+        ),
+      ),
+    );
   }
 }
 
@@ -339,3 +487,217 @@ class _EmptyTab extends StatelessWidget {
     );
   }
 }
+
+// ── Collections ──────────────────────────────────────────────────────────────
+
+class _CollectionsTab extends ConsumerWidget {
+  const _CollectionsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final collectionsAsync = ref.watch(allCollectionsProvider);
+
+    return collectionsAsync.when(
+      data: (collections) {
+        if (collections.isEmpty) {
+          return const _EmptyTab(
+            icon: Icons.collections_bookmark_outlined,
+            message:
+                'No collections yet.\nCreate one from the reader overflow menu.',
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(AppSizes.md),
+          itemCount: collections.length + 1,
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: AppSizes.sm),
+                child: FilledButton.tonalIcon(
+                  onPressed: () => context.push(Routes.collections),
+                  icon: const Icon(Icons.open_in_new, size: 16),
+                  label: const Text('Manage Collections'),
+                ),
+              );
+            }
+            final c = collections[index - 1];
+            return Card(
+              margin: const EdgeInsets.only(bottom: AppSizes.xs),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: _parseCollectionColor(c.colour),
+                  radius: 16,
+                  child: const Icon(Icons.collections_bookmark,
+                      color: Colors.white, size: 16),
+                ),
+                title: Text(c.name),
+                trailing: const Icon(Icons.chevron_right, size: 20),
+                onTap: () =>
+                    context.push(Routes.collectionDetailPath(c.id)),
+              ),
+            );
+          },
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => const _EmptyTab(
+        icon: Icons.error_outline,
+        message: 'Could not load collections.',
+      ),
+    );
+  }
+
+  Color _parseCollectionColor(String hex) {
+    try {
+      return Color(int.parse(hex.replaceFirst('#', '0xFF')));
+    } catch (_) {
+      return AppColors.green;
+    }
+  }
+}
+
+// ── Translations ────────────────────────────────────────────────────────────
+
+class _TranslationsTab extends ConsumerWidget {
+  const _TranslationsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final translationsAsync = ref.watch(_userTranslationCountProvider);
+
+    return translationsAsync.when(
+      data: (count) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.translate,
+                  size: 48,
+                  color: count > 0
+                      ? AppColors.green
+                      : Colors.grey,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  count > 0
+                      ? '$count personal translation${count == 1 ? '' : 's'}'
+                      : 'No translations yet',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  count > 0
+                      ? 'View, edit, export, and import your translations.'
+                      : 'Open any sutta and select "My translation" to start.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                const SizedBox(height: 24),
+                FilledButton.tonalIcon(
+                  onPressed: () => context.push(Routes.myTranslations),
+                  icon: const Icon(Icons.open_in_new, size: 16),
+                  label: const Text('My Translations'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => const _EmptyTab(
+        icon: Icons.error_outline,
+        message: 'Could not load translations.',
+      ),
+    );
+  }
+}
+
+// ── Dictionary ────────────────────────────────────────────────────────────
+
+class _DictionaryTab extends StatelessWidget {
+  const _DictionaryTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.menu_book, size: 48, color: AppColors.green),
+            const SizedBox(height: 16),
+            const Text(
+              'Pali Dictionary',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Search 23,000+ Pali words with definitions.\nAlso available from the reader toolbar.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.tonalIcon(
+              onPressed: () => context.push(Routes.dictionary),
+              icon: const Icon(Icons.search, size: 16),
+              label: const Text('Open Dictionary'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Community ─────────────────────────────────────────────────────────────
+
+class _CommunityTab extends StatelessWidget {
+  const _CommunityTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.people_outline, size: 48, color: AppColors.green),
+            const SizedBox(height: 16),
+            const Text(
+              'Community Packages',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Browse and import translation packages\nshared by the community.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.tonalIcon(
+              onPressed: () => context.push(Routes.communityPackages),
+              icon: const Icon(Icons.explore, size: 16),
+              label: const Text('Browse Packages'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+final _userTranslationCountProvider =
+    FutureProvider.autoDispose<int>((ref) async {
+  final db = ref.watch(appDatabaseProvider);
+  final count = await db.customSelect(
+    'SELECT COUNT(*) AS c FROM user_translations WHERE is_deleted = 0',
+  ).getSingle();
+  return count.read<int>('c');
+});

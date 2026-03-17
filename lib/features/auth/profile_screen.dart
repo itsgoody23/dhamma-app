@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/extensions/l10n_extension.dart';
 import '../../shared/providers/auth_provider.dart';
 import '../../shared/providers/sync_provider.dart';
 
@@ -13,9 +14,13 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final syncStatus = ref.watch(syncStatusProvider);
+    final lastSyncTime = ref.watch(lastSyncTimeProvider);
+    final syncErrors = ref.watch(syncErrorsProvider);
+
+    // Initialize auto-sync timer
+    ref.watch(autoSyncTimerProvider);
 
     if (user == null) {
-      // Redirect handled by router, but just in case
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (context.mounted) context.pop();
       });
@@ -23,7 +28,7 @@ class ProfileScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Account')),
+      appBar: AppBar(title: Text(context.l10n.profileTitle)),
       body: ListView(
         children: [
           const SizedBox(height: 24),
@@ -47,8 +52,8 @@ class ProfileScreen extends ConsumerWidget {
           // Sync section
           ListTile(
             leading: const Icon(Icons.sync_outlined),
-            title: const Text('Sync Now'),
-            subtitle: Text(_syncStatusText(syncStatus)),
+            title: Text(context.l10n.profileSyncNow),
+            subtitle: Text(_syncStatusText(context, syncStatus, lastSyncTime)),
             trailing: syncStatus == SyncStatus.syncing
                 ? const SizedBox(
                     width: 20,
@@ -60,12 +65,35 @@ class ProfileScreen extends ConsumerWidget {
                 ? null
                 : () => _triggerSync(ref),
           ),
+
+          // Show per-table errors if any
+          if (syncErrors.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: syncErrors.entries.map((e) {
+                  final tableName = e.key.replaceAll('user_', '');
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      'Failed to sync $tableName',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+
           const Divider(),
 
           // Sign out
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('Sign Out', style: TextStyle(color: Colors.red)),
+            title: Text(context.l10n.profileSignOut, style: const TextStyle(color: Colors.red)),
             onTap: () async {
               await ref.read(authServiceProvider).signOut();
               if (context.mounted) context.pop();
@@ -76,12 +104,20 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  String _syncStatusText(SyncStatus status) {
+  String _syncStatusText(BuildContext context, SyncStatus status, DateTime? lastSync) {
+    final lastSyncStr = lastSync != null
+        ? '${lastSync.hour.toString().padLeft(2, '0')}:${lastSync.minute.toString().padLeft(2, '0')}'
+        : null;
+
     return switch (status) {
-      SyncStatus.idle => 'Tap to sync your data',
-      SyncStatus.syncing => 'Syncing...',
-      SyncStatus.success => 'Last sync completed',
-      SyncStatus.error => 'Sync failed — tap to retry',
+      SyncStatus.idle => lastSyncStr != null
+          ? context.l10n.profileLastSynced(lastSyncStr)
+          : context.l10n.profileTapToSync,
+      SyncStatus.syncing => context.l10n.profileSyncing,
+      SyncStatus.success => lastSyncStr != null
+          ? context.l10n.profileLastSynced(lastSyncStr)
+          : context.l10n.profileSyncCompleted,
+      SyncStatus.error => context.l10n.profileSyncFailed,
     };
   }
 
@@ -89,9 +125,18 @@ class ProfileScreen extends ConsumerWidget {
     final syncService = ref.read(syncServiceProvider);
     if (syncService == null) return;
     ref.read(syncStatusProvider.notifier).set(SyncStatus.syncing);
+    ref.read(syncErrorsProvider.notifier).clear();
     try {
-      await syncService.syncAll();
-      ref.read(syncStatusProvider.notifier).set(SyncStatus.success);
+      final results = await syncService.syncAll();
+      final errors = <String, String>{};
+      for (final r in results) {
+        if (!r.ok) errors[r.table] = r.error!;
+      }
+      ref.read(syncErrorsProvider.notifier).set(errors);
+      ref.read(syncStatusProvider.notifier).set(
+            errors.isEmpty ? SyncStatus.success : SyncStatus.error,
+          );
+      ref.read(lastSyncTimeProvider.notifier).set(DateTime.now());
     } catch (_) {
       ref.read(syncStatusProvider.notifier).set(SyncStatus.error);
     }

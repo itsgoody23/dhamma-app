@@ -29,12 +29,14 @@ class StudyToolsRepository {
     required int startOffset,
     required int endOffset,
     required String colour,
+    required String language,
   }) =>
       _db.studyToolsDao.saveHighlight(
         textUid: textUid,
         startOffset: startOffset,
         endOffset: endOffset,
         colour: colour,
+        language: language,
       );
 
   Stream<List<UserHighlight>> watchHighlightsForUid(String textUid) =>

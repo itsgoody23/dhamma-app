@@ -1,0 +1,321 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Dhamma App",
+
+  "navLibrary": "Library",
+  "navSearch": "Search",
+  "navDaily": "Daily",
+  "navAudio": "Audio",
+  "navStudy": "Study",
+  "navDownloads": "Saved",
+
+  "settingsTitle": "Settings",
+  "settingsReading": "Reading",
+  "settingsTheme": "Theme",
+  "settingsFontSize": "Font size",
+  "settingsLineSpacing": "Line spacing",
+  "settingsDefaultLanguage": "Default language",
+  "settingsAppLanguage": "App language",
+  "settingsAppLanguageSubtitle": "Change the interface language",
+  "settingsSystemDefault": "System default",
+  "settingsDownloads": "Downloads",
+  "settingsWifiOnly": "Wi-Fi only downloads",
+  "settingsWifiOnlySubtitle": "Prevents downloads on mobile data",
+  "settingsAudioMobileData": "Audio only on mobile data",
+  "settingsAudioMobileDataSubtitle": "Restrict streaming to Wi-Fi",
+  "settingsAccount": "Account",
+  "settingsManageAccount": "Manage account",
+  "settingsSignIn": "Sign in",
+  "settingsSignInSubtitle": "Sync your progress across devices",
+  "settingsSyncWifiOnly": "Sync on Wi-Fi only",
+  "settingsSyncWifiOnlySubtitle": "Prevents sync on mobile data",
+  "settingsAbout": "About",
+  "settingsLicences": "Licences",
+  "settingsSourceCode": "Source code",
+  "settingsVersion": "Version",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsThemeSystem": "System default",
+  "settingsFontSmall": "Small",
+  "settingsFontMedium": "Medium",
+  "settingsFontLarge": "Large",
+  "settingsFontXL": "Extra Large",
+  "settingsLineCompact": "Compact",
+  "settingsLineNormal": "Normal",
+  "settingsLineRelaxed": "Relaxed",
+
+  "dailyTitle": "Daily",
+  "dailySuttaOfTheDay": "SUTTA OF THE DAY",
+  "dailyReadNow": "Read now",
+  "dailyNoSutta": "No daily sutta available. Please download the Dhammapada pack to start.",
+  "dailyContinueReading": "CONTINUE READING",
+  "dailyCompleted": "Completed",
+  "dailyInProgress": "In progress",
+  "dailyCategoryClassics": "CLASSICS",
+  "dailyCategoryDoctrinal": "DOCTRINAL",
+  "dailyCategoryMeditation": "MEDITATION",
+  "dailyCategoryNikayaStudy": "NIK\u0100YA STUDY",
+  "dailyDaysCount": "{count} days \u2014 {description}",
+  "@dailyDaysCount": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "description": {"type": "String"}
+    }
+  },
+  "dailyBeginner": "Beginner",
+  "dailyIntermediate": "Intermediate",
+  "dailyAdvanced": "Advanced",
+
+  "searchHint": "Search suttas, keywords, titles\u2026",
+  "searchEmpty": "Search the Pali Canon\nby title, keyword, or phrase",
+  "searchTip": "Tip: \u201csatipa\u1e6d\u1e6dh\u0101na\u201d or \u201csatipatthana\u201d both work",
+  "searchNoResults": "No results for \u201c{query}\u201d",
+  "@searchNoResults": {
+    "placeholders": { "query": {"type": "String"} }
+  },
+  "searchTryDifferent": "Try a different keyword or download more packs",
+  "searchRecentSearches": "RECENT SEARCHES",
+  "searchClear": "Clear",
+  "searchFilterResults": "Filter Results",
+  "searchClearAll": "Clear all",
+  "searchNikaya": "Nik\u0101ya",
+  "searchLanguage": "Language",
+  "searchApply": "Apply",
+
+  "libraryTitle": "Library",
+
+  "downloadsTitle": "Downloads",
+  "downloadsWifiOnly": "Wi-Fi only downloads",
+  "downloadsWifiOnlySubtitle": "Recommended to save mobile data",
+  "downloadsInstalled": "INSTALLED",
+  "downloadsAvailable": "AVAILABLE TO DOWNLOAD",
+  "downloadsNoPacks": "No packs available. Check your internet connection.",
+  "downloadsAllInstalled": "All available packs are installed.",
+  "downloadsStorageUsed": "Storage used by Dhamma App",
+  "downloadsUpdateAvailable": "Update available",
+  "downloadsUpdatePack": "Update pack",
+  "downloadsDeletePack": "Delete pack",
+  "downloadsDeleteConfirm": "Delete pack?",
+  "downloadsDeleteMessage": "This will remove \u201c{packName}\u201d and free {sizeMb} MB of storage.",
+  "@downloadsDeleteMessage": {
+    "placeholders": {
+      "packName": {"type": "String"},
+      "sizeMb": {"type": "String"}
+    }
+  },
+  "downloadsInstalling": "Installing\u2026",
+  "downloadsDownloadFailed": "Download failed",
+
+  "readerSharePassage": "Share passage",
+  "readerExportPdf": "Export PDF",
+  "readerAddToCollection": "Add to collection",
+  "readerMyTranslation": "My translation",
+  "readerHideMyTranslation": "Hide my translation",
+  "readerAddAnnotation": "Add annotation",
+  "readerShowCommentary": "Show commentary",
+  "readerHideCommentary": "Hide commentary",
+  "readerBookmark": "Bookmark",
+  "readerRemoveBookmark": "Remove bookmark",
+  "readerNotes": "Notes",
+  "readerSmaller": "Smaller",
+  "readerLarger": "Larger",
+  "readerSwitchToScroll": "Switch to scroll",
+  "readerSwitchToPages": "Switch to pages",
+  "readerSingleView": "Single view",
+  "readerSideBySide": "Side by side (P\u0101li)",
+  "readerPrevSutta": "Previous sutta",
+  "readerNextSutta": "Next sutta",
+  "readerPrevPage": "Previous page",
+  "readerNextPage": "Next page",
+  "readerPageOf": "{current} of {total}",
+  "@readerPageOf": {
+    "placeholders": {
+      "current": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "readerPrevious": "Previous",
+  "readerNext": "Next",
+  "readerSuttaNotFound": "Sutta not found.\nDownload the content pack first.",
+  "readerHighlightNote": "Highlight Note",
+  "readerWriteNoteHint": "Write your note here\u2026",
+  "readerEdit": "Edit",
+  "readerShare": "Share",
+  "readerDelete": "Delete",
+
+  "dictionaryTitle": "Pali Dictionary",
+  "dictionarySearchHint": "Search Pali words\u2026",
+  "dictionaryEnterWord": "Enter a Pali word to search",
+  "dictionaryNoResults": "No results found",
+  "dictionarySeeAlso": "See also: ",
+
+  "communityTitle": "Community Packages",
+  "communityNewest": "Newest first",
+  "communityMostDownloaded": "Most downloaded",
+  "communityAll": "All",
+  "communityEnglish": "English",
+  "communityGerman": "German",
+  "communitySpanish": "Spanish",
+  "communityNoPackages": "No packages found",
+  "communityBy": "by {author}",
+  "@communityBy": {
+    "placeholders": { "author": {"type": "String"} }
+  },
+  "communityTranslations": "{count} translations",
+  "@communityTranslations": {
+    "placeholders": { "count": {"type": "int"} }
+  },
+
+  "translationsTitle": "My Translations",
+  "translationsTab": "Translations",
+  "annotationsTab": "Annotations",
+  "translationsExportAll": "Export all as package",
+  "translationsImport": "Import package",
+  "translationsPublish": "Publish to community",
+  "translationsEmpty": "No translations yet",
+  "translationsEmptySubtitle": "Open any sutta and select \"My translation\" from the menu to start writing.",
+  "annotationsEmpty": "No annotations yet",
+  "annotationsEmptySubtitle": "Open any sutta and select \"Add annotation\" from the menu to add commentary.",
+  "translationsImportTitle": "Import Package",
+  "translationsAuthor": "Author: {author}",
+  "@translationsAuthor": {
+    "placeholders": { "author": {"type": "String"} }
+  },
+  "translationsDescription": "Description: {desc}",
+  "@translationsDescription": {
+    "placeholders": { "desc": {"type": "String"} }
+  },
+  "translationsCount": "Translations: {count}",
+  "@translationsCount": {
+    "placeholders": { "count": {"type": "int"} }
+  },
+  "annotationsCount": "Annotations: {count}",
+  "@annotationsCount": {
+    "placeholders": { "count": {"type": "int"} }
+  },
+  "translationsMergeNote": "This will merge the package contents with your existing translations.",
+  "translationsImported": "Imported {translations} translations and {commentary} annotations",
+  "@translationsImported": {
+    "placeholders": {
+      "translations": {"type": "int"},
+      "commentary": {"type": "int"}
+    }
+  },
+  "translationsPublishTitle": "Publish to Community",
+  "translationsPublishTitleLabel": "Title",
+  "translationsPublishTitleHint": "My Dhamma Translations",
+  "translationsPublishAuthorLabel": "Author name",
+  "translationsPublishDescLabel": "Description (optional)",
+  "translationsPublishTitleRequired": "Title is required",
+  "translationsPublished": "Published to community!",
+
+  "onboardingHeading": "Dhamma App",
+  "onboardingSubtitle": "The Pali Canon, in your pocket.\nFree, forever.",
+  "onboardingGetStarted": "Get started",
+  "onboardingChooseLanguage": "Choose your language",
+  "onboardingChangeLanguageLater": "You can change this later in Settings",
+  "onboardingContinue": "Continue",
+  "onboardingSkipForNow": "Skip for now",
+  "onboardingDownloadFirst": "Download your first pack",
+  "onboardingDownloadHint": "Start with the Middle-Length Discourses \u2014 a great introduction to the Dhamma",
+  "onboardingDownloadError": "Could not load pack list. You can download packs later.",
+  "onboardingDownloading": "Downloading\u2026 {percent}%",
+  "@onboardingDownloading": {
+    "placeholders": { "percent": {"type": "int"} }
+  },
+  "onboardingInstalling": "Installing\u2026",
+  "onboardingDownload": "Download",
+  "onboardingSkipDownload": "Skip \u2014 download later",
+  "onboardingHowToNavigate": "How to navigate",
+  "onboardingNavLibrary": "Library",
+  "onboardingNavLibraryDesc": "Browse the Pali Canon by Nik\u0101ya \u2014 from the D\u012bgha to the Khuddaka.",
+  "onboardingNavSearch": "Search",
+  "onboardingNavSearchDesc": "Find any sutta by keyword, title, or phrase \u2014 even with or without diacritics.",
+  "onboardingNavDaily": "Daily",
+  "onboardingNavDailyDesc": "A different sutta every day, plus structured reading plans.",
+  "onboardingGotIt": "Got it",
+  "onboardingReady": "You\u2019re ready",
+  "onboardingReadySubtitle": "May your study be a source of wisdom\nand liberation.",
+  "onboardingStartReading": "Start reading",
+
+  "authCreateAccount": "Create Account",
+  "authSignIn": "Sign In",
+  "authSyncDescription": "Sync your bookmarks, highlights,\nand notes across devices",
+  "authContinueGoogle": "Continue with Google",
+  "authContinueApple": "Continue with Apple",
+  "authOr": "OR",
+  "authEmail": "Email",
+  "authPassword": "Password",
+  "authEmailInvalid": "Enter a valid email",
+  "authPasswordShort": "At least 6 characters",
+  "authForgotPassword": "Forgot password?",
+  "authAlreadyHaveAccount": "Already have an account? Sign in",
+  "authDontHaveAccount": "Don\u2019t have an account? Create one",
+  "authContinueWithout": "Continue without account",
+  "authPasswordResetSent": "Password reset email sent",
+  "authEnterEmailFirst": "Enter your email first",
+
+  "profileTitle": "Account",
+  "profileSyncNow": "Sync Now",
+  "profileLastSynced": "Last synced at {time}",
+  "@profileLastSynced": {
+    "placeholders": { "time": {"type": "String"} }
+  },
+  "profileTapToSync": "Tap to sync your data",
+  "profileSyncing": "Syncing...",
+  "profileSyncCompleted": "Sync completed",
+  "profileSyncFailed": "Some tables failed \u2014 tap to retry",
+  "profileSignOut": "Sign Out",
+
+  "audioTitle": "Audio",
+  "audioChanting": "Chanting",
+  "audioChantingSubtitle": "P\u0101li chants and recitations",
+  "audioGuidedMeditation": "Guided Meditation",
+  "audioGuidedMeditationSubtitle": "Mett\u0101, \u0101n\u0101p\u0101nasati, body scan & more",
+  "audioDhammaTalks": "Dhamma Talks",
+  "audioDhammaTalksSubtitle": "Teachings from respected monastics",
+  "audioUnguided": "UNGUIDED TIMER",
+  "audioUnguidedDesc": "Sit in silence with a bell at the start and end.",
+  "audioMinutes": "{mins} min",
+  "@audioMinutes": {
+    "placeholders": { "mins": {"type": "int"} }
+  },
+  "audioDone": "Done",
+  "audioClose": "Close",
+  "audioEndEarly": "End early",
+  "audioOpenSutta": "Open sutta",
+  "audioPlayAll": "Play All",
+
+  "studyBookmarks": "Bookmarks",
+  "studyHighlights": "Highlights",
+  "studyNotes": "Notes",
+  "studyCollections": "Collections",
+  "studyTranslations": "Translations",
+  "studyDictionary": "Dictionary",
+  "studyCommunity": "Community",
+
+  "cancel": "Cancel",
+  "save": "Save",
+  "delete": "Delete",
+  "import_": "Import",
+  "publish": "Publish",
+  "error": "Error: {message}",
+  "@error": {
+    "placeholders": { "message": {"type": "String"} }
+  },
+  "exportFailed": "Export failed: {message}",
+  "@exportFailed": {
+    "placeholders": { "message": {"type": "String"} }
+  },
+  "importFailed": "Import failed: {message}",
+  "@importFailed": {
+    "placeholders": { "message": {"type": "String"} }
+  },
+  "publishFailed": "Publish failed: {message}",
+  "@publishFailed": {
+    "placeholders": { "message": {"type": "String"} }
+  },
+  "notDownloaded": "Not downloaded",
+  "filter": "Filter"
+}

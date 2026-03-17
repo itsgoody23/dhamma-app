@@ -47,7 +47,10 @@ void main() {
   late AppDatabase db;
 
   setUp(() async {
-    SharedPreferences.setMockInitialValues({'seed_applied_v1': true});
+    SharedPreferences.setMockInitialValues({
+      'seed_applied_v1': true,
+      'reader_paginated': false,
+    });
     db = await _seedDb();
   });
 

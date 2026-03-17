@@ -1,0 +1,321 @@
+{
+  "@@locale": "fr",
+
+  "appTitle": "Dhamma App",
+
+  "navLibrary": "Bibliothèque",
+  "navSearch": "Recherche",
+  "navDaily": "Quotidien",
+  "navAudio": "Audio",
+  "navStudy": "Étude",
+  "navDownloads": "Fichiers",
+
+  "settingsTitle": "Paramètres",
+  "settingsReading": "Lecture",
+  "settingsTheme": "Thème",
+  "settingsFontSize": "Taille de police",
+  "settingsLineSpacing": "Interligne",
+  "settingsDefaultLanguage": "Langue par défaut",
+  "settingsAppLanguage": "Langue de l'application",
+  "settingsAppLanguageSubtitle": "Changer la langue de l'interface",
+  "settingsSystemDefault": "Par défaut du système",
+  "settingsDownloads": "Téléchargements",
+  "settingsWifiOnly": "Téléchargements Wi-Fi uniquement",
+  "settingsWifiOnlySubtitle": "Empêche les téléchargements sur données mobiles",
+  "settingsAudioMobileData": "Audio sur données mobiles uniquement",
+  "settingsAudioMobileDataSubtitle": "Limiter le streaming au Wi-Fi",
+  "settingsAccount": "Compte",
+  "settingsManageAccount": "Gérer le compte",
+  "settingsSignIn": "Se connecter",
+  "settingsSignInSubtitle": "Synchroniser votre progression entre appareils",
+  "settingsSyncWifiOnly": "Synchroniser via Wi-Fi uniquement",
+  "settingsSyncWifiOnlySubtitle": "Empêche la synchronisation sur données mobiles",
+  "settingsAbout": "À propos",
+  "settingsLicences": "Licences",
+  "settingsSourceCode": "Code source",
+  "settingsVersion": "Version",
+  "settingsThemeLight": "Clair",
+  "settingsThemeDark": "Sombre",
+  "settingsThemeSystem": "Par défaut du système",
+  "settingsFontSmall": "Petit",
+  "settingsFontMedium": "Moyen",
+  "settingsFontLarge": "Grand",
+  "settingsFontXL": "Très grand",
+  "settingsLineCompact": "Compact",
+  "settingsLineNormal": "Normal",
+  "settingsLineRelaxed": "Aéré",
+
+  "dailyTitle": "Quotidien",
+  "dailySuttaOfTheDay": "SUTTA DU JOUR",
+  "dailyReadNow": "Lire maintenant",
+  "dailyNoSutta": "Aucun sutta quotidien disponible. Veuillez télécharger le pack Dhammapada.",
+  "dailyContinueReading": "CONTINUER LA LECTURE",
+  "dailyCompleted": "Terminé",
+  "dailyInProgress": "En cours",
+  "dailyCategoryClassics": "CLASSIQUES",
+  "dailyCategoryDoctrinal": "DOCTRINAL",
+  "dailyCategoryMeditation": "MÉDITATION",
+  "dailyCategoryNikayaStudy": "ÉTUDE DES NIK\u0100YA",
+  "dailyDaysCount": "{count} jours \u2014 {description}",
+  "@dailyDaysCount": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "description": {"type": "String"}
+    }
+  },
+  "dailyBeginner": "Débutant",
+  "dailyIntermediate": "Intermédiaire",
+  "dailyAdvanced": "Avancé",
+
+  "searchHint": "Rechercher suttas, mots-clés, titres\u2026",
+  "searchEmpty": "Rechercher dans le Canon pali\npar titre, mot-clé ou expression",
+  "searchTip": "Astuce : \u00ab satipa\u1e6d\u1e6dh\u0101na \u00bb ou \u00ab satipatthana \u00bb fonctionnent tous les deux",
+  "searchNoResults": "Aucun résultat pour \u00ab {query} \u00bb",
+  "@searchNoResults": {
+    "placeholders": { "query": {"type": "String"} }
+  },
+  "searchTryDifferent": "Essayez un autre mot-clé ou téléchargez plus de packs",
+  "searchRecentSearches": "RECHERCHES RÉCENTES",
+  "searchClear": "Effacer",
+  "searchFilterResults": "Filtrer les résultats",
+  "searchClearAll": "Tout effacer",
+  "searchNikaya": "Nik\u0101ya",
+  "searchLanguage": "Langue",
+  "searchApply": "Appliquer",
+
+  "libraryTitle": "Bibliothèque",
+
+  "downloadsTitle": "Téléchargements",
+  "downloadsWifiOnly": "Téléchargements Wi-Fi uniquement",
+  "downloadsWifiOnlySubtitle": "Recommandé pour économiser les données mobiles",
+  "downloadsInstalled": "INSTALLÉS",
+  "downloadsAvailable": "DISPONIBLES AU TÉLÉCHARGEMENT",
+  "downloadsNoPacks": "Aucun pack disponible. Vérifiez votre connexion internet.",
+  "downloadsAllInstalled": "Tous les packs disponibles sont installés.",
+  "downloadsStorageUsed": "Stockage utilisé par Dhamma App",
+  "downloadsUpdateAvailable": "Mise à jour disponible",
+  "downloadsUpdatePack": "Mettre à jour le pack",
+  "downloadsDeletePack": "Supprimer le pack",
+  "downloadsDeleteConfirm": "Supprimer le pack ?",
+  "downloadsDeleteMessage": "Cela supprimera \u00ab {packName} \u00bb et libérera {sizeMb} Mo de stockage.",
+  "@downloadsDeleteMessage": {
+    "placeholders": {
+      "packName": {"type": "String"},
+      "sizeMb": {"type": "String"}
+    }
+  },
+  "downloadsInstalling": "Installation\u2026",
+  "downloadsDownloadFailed": "Échec du téléchargement",
+
+  "readerSharePassage": "Partager le passage",
+  "readerExportPdf": "Exporter en PDF",
+  "readerAddToCollection": "Ajouter à la collection",
+  "readerMyTranslation": "Ma traduction",
+  "readerHideMyTranslation": "Masquer ma traduction",
+  "readerAddAnnotation": "Ajouter une annotation",
+  "readerShowCommentary": "Afficher le commentaire",
+  "readerHideCommentary": "Masquer le commentaire",
+  "readerBookmark": "Signet",
+  "readerRemoveBookmark": "Supprimer le signet",
+  "readerNotes": "Notes",
+  "readerSmaller": "Plus petit",
+  "readerLarger": "Plus grand",
+  "readerSwitchToScroll": "Passer au défilement",
+  "readerSwitchToPages": "Passer aux pages",
+  "readerSingleView": "Vue simple",
+  "readerSideBySide": "Côte à côte (P\u0101li)",
+  "readerPrevSutta": "Sutta précédent",
+  "readerNextSutta": "Sutta suivant",
+  "readerPrevPage": "Page précédente",
+  "readerNextPage": "Page suivante",
+  "readerPageOf": "{current} sur {total}",
+  "@readerPageOf": {
+    "placeholders": {
+      "current": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "readerPrevious": "Précédent",
+  "readerNext": "Suivant",
+  "readerSuttaNotFound": "Sutta introuvable.\nTéléchargez d'abord le pack de contenu.",
+  "readerHighlightNote": "Note de surlignage",
+  "readerWriteNoteHint": "Écrivez votre note ici\u2026",
+  "readerEdit": "Modifier",
+  "readerShare": "Partager",
+  "readerDelete": "Supprimer",
+
+  "dictionaryTitle": "Dictionnaire pali",
+  "dictionarySearchHint": "Rechercher des mots pali\u2026",
+  "dictionaryEnterWord": "Entrez un mot pali à rechercher",
+  "dictionaryNoResults": "Aucun résultat trouvé",
+  "dictionarySeeAlso": "Voir aussi : ",
+
+  "communityTitle": "Packs communautaires",
+  "communityNewest": "Plus récents",
+  "communityMostDownloaded": "Plus téléchargés",
+  "communityAll": "Tous",
+  "communityEnglish": "Anglais",
+  "communityGerman": "Allemand",
+  "communitySpanish": "Espagnol",
+  "communityNoPackages": "Aucun pack trouvé",
+  "communityBy": "par {author}",
+  "@communityBy": {
+    "placeholders": { "author": {"type": "String"} }
+  },
+  "communityTranslations": "{count} traductions",
+  "@communityTranslations": {
+    "placeholders": { "count": {"type": "int"} }
+  },
+
+  "translationsTitle": "Mes traductions",
+  "translationsTab": "Traductions",
+  "annotationsTab": "Annotations",
+  "translationsExportAll": "Tout exporter en pack",
+  "translationsImport": "Importer un pack",
+  "translationsPublish": "Publier dans la communauté",
+  "translationsEmpty": "Pas encore de traductions",
+  "translationsEmptySubtitle": "Ouvrez un sutta et sélectionnez « Ma traduction » dans le menu pour commencer.",
+  "annotationsEmpty": "Pas encore d'annotations",
+  "annotationsEmptySubtitle": "Ouvrez un sutta et sélectionnez « Ajouter une annotation » dans le menu.",
+  "translationsImportTitle": "Importer un pack",
+  "translationsAuthor": "Auteur : {author}",
+  "@translationsAuthor": {
+    "placeholders": { "author": {"type": "String"} }
+  },
+  "translationsDescription": "Description : {desc}",
+  "@translationsDescription": {
+    "placeholders": { "desc": {"type": "String"} }
+  },
+  "translationsCount": "Traductions : {count}",
+  "@translationsCount": {
+    "placeholders": { "count": {"type": "int"} }
+  },
+  "annotationsCount": "Annotations : {count}",
+  "@annotationsCount": {
+    "placeholders": { "count": {"type": "int"} }
+  },
+  "translationsMergeNote": "Cela fusionnera le contenu du pack avec vos traductions existantes.",
+  "translationsImported": "{translations} traductions et {commentary} annotations importées",
+  "@translationsImported": {
+    "placeholders": {
+      "translations": {"type": "int"},
+      "commentary": {"type": "int"}
+    }
+  },
+  "translationsPublishTitle": "Publier dans la communauté",
+  "translationsPublishTitleLabel": "Titre",
+  "translationsPublishTitleHint": "Mes traductions du Dhamma",
+  "translationsPublishAuthorLabel": "Nom de l'auteur",
+  "translationsPublishDescLabel": "Description (optionnel)",
+  "translationsPublishTitleRequired": "Le titre est requis",
+  "translationsPublished": "Publié dans la communauté !",
+
+  "onboardingHeading": "Dhamma App",
+  "onboardingSubtitle": "Le Canon pali, dans votre poche.\nGratuit, pour toujours.",
+  "onboardingGetStarted": "Commencer",
+  "onboardingChooseLanguage": "Choisissez votre langue",
+  "onboardingChangeLanguageLater": "Vous pouvez changer cela plus tard dans les Paramètres",
+  "onboardingContinue": "Continuer",
+  "onboardingSkipForNow": "Passer pour l'instant",
+  "onboardingDownloadFirst": "Téléchargez votre premier pack",
+  "onboardingDownloadHint": "Commencez par les Discours de longueur moyenne \u2014 une excellente introduction au Dhamma",
+  "onboardingDownloadError": "Impossible de charger la liste des packs. Vous pourrez télécharger des packs plus tard.",
+  "onboardingDownloading": "Téléchargement\u2026 {percent}%",
+  "@onboardingDownloading": {
+    "placeholders": { "percent": {"type": "int"} }
+  },
+  "onboardingInstalling": "Installation\u2026",
+  "onboardingDownload": "Télécharger",
+  "onboardingSkipDownload": "Passer \u2014 télécharger plus tard",
+  "onboardingHowToNavigate": "Comment naviguer",
+  "onboardingNavLibrary": "Bibliothèque",
+  "onboardingNavLibraryDesc": "Parcourez le Canon pali par Nik\u0101ya \u2014 du D\u012bgha au Khuddaka.",
+  "onboardingNavSearch": "Recherche",
+  "onboardingNavSearchDesc": "Trouvez n'importe quel sutta par mot-clé, titre ou expression \u2014 avec ou sans signes diacritiques.",
+  "onboardingNavDaily": "Quotidien",
+  "onboardingNavDailyDesc": "Un sutta différent chaque jour, plus des plans de lecture structurés.",
+  "onboardingGotIt": "Compris",
+  "onboardingReady": "Vous êtes prêt",
+  "onboardingReadySubtitle": "Que votre étude soit une source de sagesse\net de libération.",
+  "onboardingStartReading": "Commencer la lecture",
+
+  "authCreateAccount": "Créer un compte",
+  "authSignIn": "Se connecter",
+  "authSyncDescription": "Synchronisez vos signets, surlignages\net notes entre appareils",
+  "authContinueGoogle": "Continuer avec Google",
+  "authContinueApple": "Continuer avec Apple",
+  "authOr": "OU",
+  "authEmail": "E-mail",
+  "authPassword": "Mot de passe",
+  "authEmailInvalid": "Entrez un e-mail valide",
+  "authPasswordShort": "Au moins 6 caractères",
+  "authForgotPassword": "Mot de passe oublié ?",
+  "authAlreadyHaveAccount": "Déjà un compte ? Se connecter",
+  "authDontHaveAccount": "Pas de compte ? Créez-en un",
+  "authContinueWithout": "Continuer sans compte",
+  "authPasswordResetSent": "E-mail de réinitialisation envoyé",
+  "authEnterEmailFirst": "Entrez d'abord votre e-mail",
+
+  "profileTitle": "Compte",
+  "profileSyncNow": "Synchroniser maintenant",
+  "profileLastSynced": "Dernière synchronisation à {time}",
+  "@profileLastSynced": {
+    "placeholders": { "time": {"type": "String"} }
+  },
+  "profileTapToSync": "Appuyez pour synchroniser vos données",
+  "profileSyncing": "Synchronisation...",
+  "profileSyncCompleted": "Synchronisation terminée",
+  "profileSyncFailed": "Certaines tables ont échoué \u2014 appuyez pour réessayer",
+  "profileSignOut": "Se déconnecter",
+
+  "audioTitle": "Audio",
+  "audioChanting": "Récitation",
+  "audioChantingSubtitle": "Chants et récitations en p\u0101li",
+  "audioGuidedMeditation": "Méditation guidée",
+  "audioGuidedMeditationSubtitle": "Mett\u0101, \u0101n\u0101p\u0101nasati, scan corporel & plus",
+  "audioDhammaTalks": "Enseignements du Dhamma",
+  "audioDhammaTalksSubtitle": "Enseignements de moines respectés",
+  "audioUnguided": "MINUTERIE SANS GUIDE",
+  "audioUnguidedDesc": "Asseyez-vous en silence avec une cloche au début et à la fin.",
+  "audioMinutes": "{mins} min",
+  "@audioMinutes": {
+    "placeholders": { "mins": {"type": "int"} }
+  },
+  "audioDone": "Terminé",
+  "audioClose": "Fermer",
+  "audioEndEarly": "Terminer plus tôt",
+  "audioOpenSutta": "Ouvrir le sutta",
+  "audioPlayAll": "Tout lire",
+
+  "studyBookmarks": "Signets",
+  "studyHighlights": "Surlignages",
+  "studyNotes": "Notes",
+  "studyCollections": "Collections",
+  "studyTranslations": "Traductions",
+  "studyDictionary": "Dictionnaire",
+  "studyCommunity": "Communauté",
+
+  "cancel": "Annuler",
+  "save": "Enregistrer",
+  "delete": "Supprimer",
+  "import_": "Importer",
+  "publish": "Publier",
+  "error": "Erreur : {message}",
+  "@error": {
+    "placeholders": { "message": {"type": "String"} }
+  },
+  "exportFailed": "Échec de l'exportation : {message}",
+  "@exportFailed": {
+    "placeholders": { "message": {"type": "String"} }
+  },
+  "importFailed": "Échec de l'importation : {message}",
+  "@importFailed": {
+    "placeholders": { "message": {"type": "String"} }
+  },
+  "publishFailed": "Échec de la publication : {message}",
+  "@publishFailed": {
+    "placeholders": { "message": {"type": "String"} }
+  },
+  "notDownloaded": "Non téléchargé",
+  "filter": "Filtrer"
+}

@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/extensions/l10n_extension.dart';
 import '../../shared/providers/auth_provider.dart';
 import '../../shared/providers/database_provider.dart';
 
@@ -46,14 +49,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         await authService.signInWithEmail(email, password);
       }
 
-      // Claim orphaned local data for this user
-      final user = authService.currentUser;
-      if (user != null && mounted) {
-        final db = ref.read(appDatabaseProvider);
-        await db.claimLocalData(user.id);
-      }
-
-      if (mounted) context.pop();
+      await _claimLocalDataAndPop();
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -61,17 +57,56 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authServiceProvider).signInWithGoogle();
+      await _claimLocalDataAndPop();
+    } catch (e) {
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _signInWithApple() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authServiceProvider).signInWithApple();
+      await _claimLocalDataAndPop();
+    } catch (e) {
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _claimLocalDataAndPop() async {
+    final user = ref.read(authServiceProvider).currentUser;
+    if (user != null && mounted) {
+      final db = ref.read(appDatabaseProvider);
+      await db.claimLocalData(user.id);
+    }
+    if (mounted) context.pop();
+  }
+
   Future<void> _resetPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      setState(() => _error = 'Enter your email first');
+      setState(() => _error = context.l10n.authEnterEmailFirst);
       return;
     }
     try {
       await ref.read(authServiceProvider).resetPassword(email);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password reset email sent')),
+          SnackBar(content: Text(context.l10n.authPasswordResetSent)),
         );
       }
     } catch (e) {
@@ -81,8 +116,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final showApple = Platform.isIOS || Platform.isMacOS;
+
     return Scaffold(
-      appBar: AppBar(title: Text(_isSignUp ? 'Create Account' : 'Sign In')),
+      appBar: AppBar(title: Text(_isSignUp ? context.l10n.authCreateAccount : context.l10n.authSignIn)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -95,21 +132,59 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   size: 72, color: AppColors.green),
               const SizedBox(height: 16),
               Text(
-                'Sync your bookmarks, highlights,\nand notes across devices',
+                context.l10n.authSyncDescription,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               const SizedBox(height: 32),
+
+              // ── Social sign-in buttons ────────────────────────────────
+              OutlinedButton.icon(
+                onPressed: _loading ? null : _signInWithGoogle,
+                icon: const Icon(Icons.g_mobiledata, size: 24),
+                label: Text(context.l10n.authContinueGoogle),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                ),
+              ),
+              if (showApple) ...[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _loading ? null : _signInWithApple,
+                  icon: const Icon(Icons.apple, size: 24),
+                  label: Text(context.l10n.authContinueApple),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  const Expanded(child: Divider()),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(context.l10n.authOr,
+                        style: TextStyle(
+                            color: Colors.grey.shade600, fontSize: 12)),
+                  ),
+                  const Expanded(child: Divider()),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // ── Email/password form ───────────────────────────────────
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined),
+                decoration: InputDecoration(
+                  labelText: context.l10n.authEmail,
+                  prefixIcon: const Icon(Icons.email_outlined),
                 ),
                 validator: (v) {
                   if (v == null || !v.contains('@')) {
-                    return 'Enter a valid email';
+                    return context.l10n.authEmailInvalid;
                   }
                   return null;
                 },
@@ -118,12 +193,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  prefixIcon: Icon(Icons.lock_outlined),
+                decoration: InputDecoration(
+                  labelText: context.l10n.authPassword,
+                  prefixIcon: const Icon(Icons.lock_outlined),
                 ),
                 validator: (v) {
-                  if (v == null || v.length < 6) return 'At least 6 characters';
+                  if (v == null || v.length < 6) return context.l10n.authPasswordShort;
                   return null;
                 },
               ),
@@ -147,13 +222,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white),
                       )
-                    : Text(_isSignUp ? 'Create Account' : 'Sign In'),
+                    : Text(_isSignUp ? context.l10n.authCreateAccount : context.l10n.authSignIn),
               ),
               const SizedBox(height: 12),
               if (!_isSignUp)
                 TextButton(
                   onPressed: _resetPassword,
-                  child: const Text('Forgot password?'),
+                  child: Text(context.l10n.authForgotPassword),
                 ),
               TextButton(
                 onPressed: () => setState(() {
@@ -161,13 +236,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   _error = null;
                 }),
                 child: Text(_isSignUp
-                    ? 'Already have an account? Sign in'
-                    : "Don't have an account? Create one"),
+                    ? context.l10n.authAlreadyHaveAccount
+                    : context.l10n.authDontHaveAccount),
               ),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => context.pop(),
-                child: const Text('Continue without account'),
+                child: Text(context.l10n.authContinueWithout),
               ),
             ],
           ),

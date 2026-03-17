@@ -7,6 +7,7 @@ class DownloadedPacks extends Table {
   TextColumn get language => text()();
   TextColumn get nikaya => text().nullable()();
   RealColumn get sizeMb => real().named('size_mb')();
+  TextColumn get version => text().nullable()();
   DateTimeColumn get downloadedAt =>
       dateTime().named('downloaded_at').withDefault(currentDateAndTime)();
 }

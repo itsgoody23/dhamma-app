@@ -17,6 +17,8 @@ class Texts extends Table {
   TextColumn get source => text().nullable()();
   TextColumn get contentHtml => text().named('content_html').nullable()();
   TextColumn get contentPlain => text().named('content_plain').nullable()();
+  TextColumn get textType =>
+      text().named('text_type').withDefault(const Constant('root'))();
 
   @override
   List<Set<Column>> get uniqueKeys => [

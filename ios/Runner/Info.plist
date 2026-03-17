@@ -54,6 +54,7 @@
 	<!-- Background fetch is required for WorkManager one-off tasks on iOS -->
 	<key>UIBackgroundModes</key>
 	<array>
+		<string>audio</string>
 		<string>fetch</string>
 		<string>processing</string>
 	</array>

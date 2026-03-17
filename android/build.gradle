@@ -12,6 +12,21 @@ subprojects {
 subprojects {
     project.evaluationDependsOn(":app")
 }
+subprojects {
+    if (project.name != "app") {
+        afterEvaluate { subproject ->
+            if (subproject.hasProperty('android') && subproject.android.namespace == null) {
+                def manifest = file("${subproject.projectDir}/src/main/AndroidManifest.xml")
+                if (manifest.exists()) {
+                    def pkg = new groovy.xml.XmlSlurper().parse(manifest).@package.toString()
+                    if (pkg) {
+                        subproject.android.namespace = pkg
+                    }
+                }
+            }
+        }
+    }
+}
 
 tasks.register("clean", Delete) {
     delete rootProject.buildDir

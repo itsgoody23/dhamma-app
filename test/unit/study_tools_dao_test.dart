@@ -90,6 +90,7 @@ void main() {
         startOffset: 10,
         endOffset: 50,
         colour: '#FFD700',
+        language: 'en',
       );
       final highlights =
           await db.studyToolsDao.watchHighlightsForUid('mn1').first;
@@ -103,12 +104,14 @@ void main() {
         startOffset: 0,
         endOffset: 10,
         colour: '#FFD700',
+        language: 'en',
       );
       await db.studyToolsDao.saveHighlight(
         textUid: 'mn1',
         startOffset: 20,
         endOffset: 40,
         colour: '#90EE90',
+        language: 'en',
       );
       final highlights =
           await db.studyToolsDao.watchHighlightsForUid('mn1').first;
@@ -121,12 +124,14 @@ void main() {
         startOffset: 0,
         endOffset: 10,
         colour: '#FFD700',
+        language: 'en',
       );
       await db.studyToolsDao.saveHighlight(
         textUid: 'mn1',
         startOffset: 20,
         endOffset: 40,
         colour: '#90EE90',
+        language: 'en',
       );
       final before = await db.studyToolsDao.watchHighlightsForUid('mn1').first;
       await db.studyToolsDao.deleteHighlight(before.first.id);
