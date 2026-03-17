@@ -17,6 +17,23 @@ import '../../shared/providers/database_provider.dart';
 import '../../shared/widgets/nikaya_badge.dart';
 import '../../shared/widgets/sync_status_banner.dart';
 
+// ── Streak Providers ──────────────────────────────────────────────────────────
+
+final currentStreakProvider = StreamProvider.autoDispose<int>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.streaksDao.watchCurrentStreak();
+});
+
+final longestStreakProvider = StreamProvider.autoDispose<int>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.streaksDao.watchLongestStreak();
+});
+
+final todayStatsProvider = StreamProvider.autoDispose<ReadingStreak?>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.streaksDao.watchToday();
+});
+
 // ── Providers ─────────────────────────────────────────────────────────────────
 
 final dailySuttaProvider = FutureProvider.autoDispose<DailySutta?>((ref) async {
@@ -93,6 +110,8 @@ class DailyScreen extends ConsumerWidget {
     final dailyAsync = ref.watch(dailySuttaProvider);
     final plansAsync = ref.watch(readingPlansProvider);
     final recentAsync = ref.watch(recentlyReadProvider);
+    final streakAsync = ref.watch(currentStreakProvider);
+    final todayAsync = ref.watch(todayStatsProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.dailyTitle)),
@@ -100,6 +119,13 @@ class DailyScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(AppSizes.md),
         children: [
           const SyncStatusBanner(),
+
+          // Reading streak card
+          _StreakCard(
+            streakAsync: streakAsync,
+            todayAsync: todayAsync,
+          ),
+          const SizedBox(height: AppSizes.sm),
 
           // Daily sutta card
           dailyAsync.when(
@@ -230,6 +256,67 @@ class _NoDailyCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(AppSizes.md),
         child: Text(context.l10n.dailyNoSutta),
+      ),
+    );
+  }
+}
+
+class _StreakCard extends StatelessWidget {
+  const _StreakCard({required this.streakAsync, required this.todayAsync});
+
+  final AsyncValue<int> streakAsync;
+  final AsyncValue<ReadingStreak?> todayAsync;
+
+  @override
+  Widget build(BuildContext context) {
+    final streak = streakAsync.value ?? 0;
+    final today = todayAsync.value;
+    final minutes = today?.minutesRead ?? 0;
+    final suttas = today?.suttasRead ?? 0;
+
+    return Card(
+      color: streak > 0
+          ? AppColors.green.withValues(alpha: 0.08)
+          : null,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSizes.md),
+        child: Row(
+          children: [
+            Icon(
+              streak > 0 ? Icons.local_fire_department : Icons.local_fire_department_outlined,
+              color: streak > 0 ? Colors.orange : Colors.grey,
+              size: 32,
+            ),
+            const SizedBox(width: AppSizes.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    streak > 0
+                        ? '$streak day streak!'
+                        : 'Start your streak today',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Today: $minutes min · $suttas suttas read',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -20,8 +20,10 @@ abstract final class Routes {
   static const String dhammaTalks = '/audio/talks';
   static const String myTranslations = '/translations';
   static const String dictionary = '/dictionary';
+  static const String community = '/community';
   static const String communityPackages = '/community';
   static const String packageDetail = '/community/:id';
+  static const String studyGroups = '/community/groups';
   static const String login = '/login';
   static const String profile = '/profile';
 

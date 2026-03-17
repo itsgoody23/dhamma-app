@@ -4,6 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../data/services/share_service.dart';
+import '../../data/services/tts_service.dart';
+import '../../shared/providers/tts_provider.dart';
+import '../../shared/widgets/sutta_share_card.dart';
+import 'widgets/discussion_sheet.dart';
+import 'widgets/parallels_section.dart';
 
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
@@ -155,11 +160,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   bool _didJumpToScrollTo = false;
   String _currentReadableText = '';
   bool _showCommunityHighlights = false;
+  DateTime? _readingStartTime;
 
   @override
   void initState() {
     super.initState();
     _activeLanguage = widget.language;
+    _readingStartTime = DateTime.now();
     _restoreScrollPosition();
     _scrollController.addListener(_onScroll);
   }
@@ -170,6 +177,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _progressDebounce?.cancel();
     _scrollController.dispose();
     _keyboardFocusNode.dispose();
+    // Record reading time for streak
+    if (_readingStartTime != null) {
+      final minutes =
+          DateTime.now().difference(_readingStartTime!).inMinutes;
+      if (minutes > 0) {
+        ref.read(appDatabaseProvider).streaksDao.recordReading(
+              additionalMinutes: minutes,
+              additionalSuttas: 1,
+            );
+      }
+    }
+    // Stop TTS if playing
+    ref.read(ttsServiceProvider).stop();
     super.dispose();
   }
 
@@ -232,6 +252,49 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   Future<void> _share(SuttaText sutta) async {
     try {
       await ShareService.sharePassage(sutta);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not share: ${friendlyError(e)}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _shareAsImage(SuttaText sutta) async {
+    // Show style picker
+    final style = await showModalBottomSheet<ShareCardStyle>(
+      context: context,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Choose card style',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: ShareCardStyle.values.map((s) {
+                final label = s.name[0].toUpperCase() + s.name.substring(1);
+                return ChoiceChip(
+                  label: Text(label),
+                  selected: false,
+                  onSelected: (_) => Navigator.pop(ctx, s),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+    if (style == null) return;
+
+    try {
+      await ShareService.shareAsImage(sutta, style: style);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -524,6 +587,44 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),
           ),
+          // TTS button
+          Consumer(
+            builder: (context, ref, _) {
+              final ttsState = ref.watch(ttsStateProvider).value ?? TtsState.stopped;
+              return IconButton(
+                icon: Icon(
+                  ttsState == TtsState.playing
+                      ? Icons.stop_circle_outlined
+                      : Icons.volume_up_outlined,
+                  color: ttsState == TtsState.playing ? AppColors.green : null,
+                ),
+                tooltip: ttsState == TtsState.playing ? 'Stop reading' : 'Read aloud',
+                onPressed: () {
+                  final tts = ref.read(ttsServiceProvider);
+                  if (ttsState == TtsState.playing) {
+                    tts.stop();
+                  } else if (suttaAsync.value != null) {
+                    final text = suttaAsync.value!.contentPlain ?? '';
+                    if (text.isNotEmpty) {
+                      tts.speak(text, language: lang);
+                    }
+                  }
+                },
+              );
+            },
+          ),
+          // Discussion button
+          IconButton(
+            icon: const Icon(Icons.forum_outlined),
+            tooltip: 'Discussion',
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                builder: (_) => DiscussionSheet(textUid: widget.uid),
+              );
+            },
+          ),
           // Note button
           IconButton(
             icon: Icon(
@@ -543,6 +644,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               onSelected: (value) {
                 final sutta = suttaAsync.value!;
                 if (value == 'share') _share(sutta);
+                if (value == 'share_image') _shareAsImage(sutta);
                 if (value == 'pdf') _exportPdf(sutta);
                 if (value == 'commentary') {
                   setState(() => _showCommentary = !_showCommentary);
@@ -560,6 +662,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               },
               itemBuilder: (_) => [
                 PopupMenuItem(value: 'share', child: Text(context.l10n.readerSharePassage)),
+                const PopupMenuItem(value: 'share_image', child: Text('Share as Image')),
                 PopupMenuItem(value: 'pdf', child: Text(context.l10n.readerExportPdf)),
                 PopupMenuItem(
                     value: 'collection', child: Text(context.l10n.readerAddToCollection)),
@@ -746,6 +849,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                               if (_showCommentary)
                                 CommentaryView(suttaUid: widget.uid),
                               const SizedBox(height: AppSizes.xl),
+                              // Parallels & cross-references
+                              ParallelsSection(uid: widget.uid),
+                              const SizedBox(height: AppSizes.lg),
                               TranslatorAttributionWidget(
                                 translator: sutta.translator,
                                 source: sutta.source ?? 'sc',

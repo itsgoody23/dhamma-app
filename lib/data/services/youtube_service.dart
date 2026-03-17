@@ -53,21 +53,44 @@ class YoutubeService {
   /// Resolve a YouTube channel URL or ID and add it to the database.
   /// Returns the new [TeacherChannel], or throws if the channel can't be resolved.
   Future<TeacherChannel> addChannel(String channelInput) async {
-    // Strip query parameters (e.g. ?si=...) that break channel resolution.
     var cleanInput = channelInput.trim();
+
+    // Rebuild URL with just scheme + host + path (strip query/fragment cleanly)
     final uri = Uri.tryParse(cleanInput);
-    if (uri != null && uri.hasScheme) {
-      cleanInput = uri.replace(query: '', fragment: '').toString();
-      // Remove trailing '?' left after clearing the query string.
-      if (cleanInput.endsWith('?')) {
-        cleanInput = cleanInput.substring(0, cleanInput.length - 1);
-      }
+    if (uri != null && uri.hasScheme && uri.host.isNotEmpty) {
+      cleanInput = Uri(
+        scheme: uri.scheme,
+        host: uri.host,
+        path: uri.path,
+      ).toString();
     }
 
-    final channel = await _yt.channels.get(cleanInput);
+    // Resolve channel with timeout
+    final Channel channel;
+    try {
+      channel = await _yt.channels
+          .get(cleanInput)
+          .timeout(const Duration(seconds: 15));
+    } on TimeoutException {
+      throw Exception('Request timed out. Check your connection and try again.');
+    } on ArgumentError {
+      throw Exception('Invalid channel URL or ID. Try pasting the full URL.');
+    } catch (_) {
+      throw Exception('Could not find channel. Verify the URL is correct.');
+    }
+
     final name = channel.title;
     final channelId = channel.id.value;
     final thumbUrl = channel.logoUrl;
+
+    // Check for duplicate
+    final existing = await _db.customSelect(
+      'SELECT id FROM teacher_channels WHERE channel_id = ?',
+      variables: [Variable<String>(channelId)],
+    ).get();
+    if (existing.isNotEmpty) {
+      throw Exception('${channel.title} is already in your list.');
+    }
 
     final maxRow = await _db
         .customSelect('SELECT MAX(sort_order) AS m FROM teacher_channels')

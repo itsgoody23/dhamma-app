@@ -243,9 +243,6 @@ class PackDownloadService {
       await _cleanup(gzPath, dbPath);
     } finally {
       _removeCancelToken(packId);
-      // Close and remove the stream controller so it doesn't leak.
-      _progressControllers[packId]?.close();
-      _progressControllers.remove(packId);
     }
   }
 

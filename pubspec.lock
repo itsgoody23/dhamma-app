@@ -621,6 +621,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_tts:
+    dependency: "direct main"
+    description:
+      name: flutter_tts
+      sha256: ce5eb209b40e95f2f4a1397116c87ab2fcdff32257d04ed7a764e75894c03775
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.2.5"
   flutter_web_plugins:
     dependency: transitive
     description: flutter
@@ -1252,6 +1260,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.27.7"
+  screenshot:
+    dependency: "direct main"
+    description:
+      name: screenshot
+      sha256: "63817697a7835e6ce82add4228e15d233b74d42975c143ad8cfe07009fab866b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0"
   share_plus:
     dependency: "direct main"
     description:

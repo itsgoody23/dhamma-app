@@ -24,6 +24,7 @@ import '../../features/translations/my_translations_screen.dart';
 import '../../features/dictionary/dictionary_screen.dart';
 import '../../features/community/browse_packages_screen.dart';
 import '../../features/community/package_detail_screen.dart';
+import '../../features/community/study_groups_screen.dart';
 import '../../shared/widgets/main_shell.dart';
 import 'routes.dart';
 
@@ -155,6 +156,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.communityPackages,
         builder: (context, state) => const BrowsePackagesScreen(),
+      ),
+      GoRoute(
+        path: Routes.studyGroups,
+        builder: (context, state) => const StudyGroupsScreen(),
       ),
       GoRoute(
         path: Routes.packageDetail,

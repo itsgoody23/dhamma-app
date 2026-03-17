@@ -25,6 +25,7 @@ import 'tables/audio_cache_table.dart';
 import 'tables/user_translations_table.dart';
 import 'tables/user_commentary_table.dart';
 import 'tables/pali_dictionary_table.dart';
+import 'tables/reading_streaks_table.dart';
 import 'daos/texts_dao.dart';
 import 'daos/search_dao.dart';
 import 'daos/study_tools_dao.dart';
@@ -33,6 +34,7 @@ import 'daos/packs_dao.dart';
 import 'daos/collections_dao.dart';
 import 'daos/user_translations_dao.dart';
 import 'daos/dictionary_dao.dart';
+import 'daos/streaks_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -56,6 +58,7 @@ part 'app_database.g.dart';
     UserTranslations,
     UserCommentary,
     PaliDictionary,
+    ReadingStreaks,
   ],
   daos: [
     TextsDao,
@@ -66,6 +69,7 @@ part 'app_database.g.dart';
     CollectionsDao,
     UserTranslationsDao,
     DictionaryDao,
+    StreaksDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -73,13 +77,14 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
           await _createFts5Table();
+          await _createDictionaryTable();
           await _createIndexes();
           await _seedDefaultChannels();
         },
@@ -262,6 +267,17 @@ class AppDatabase extends _$AppDatabase {
               )
             ''');
             await _seedDefaultChannels();
+          }
+          if (from < 12) {
+            // v11 → v12: Add reading_streaks table for streak tracking.
+            await customStatement('''
+              CREATE TABLE IF NOT EXISTS reading_streaks (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                date TEXT NOT NULL UNIQUE,
+                minutes_read INTEGER NOT NULL DEFAULT 0,
+                suttas_read INTEGER NOT NULL DEFAULT 0
+              )
+            ''');
           }
         },
         beforeOpen: (details) async {

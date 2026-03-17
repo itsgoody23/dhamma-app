@@ -11,6 +11,8 @@ import '../../data/models/audio_track.dart';
 import '../../data/services/audio_playback_service.dart';
 import '../../data/services/content_manifest_service.dart';
 import '../../shared/providers/audio_provider.dart';
+import '../../shared/providers/database_provider.dart';
+import 'widgets/chanting_text_view.dart';
 
 part 'chanting_screen.g.dart';
 
@@ -21,6 +23,14 @@ Future<List<AudioTrack>> chantingTracks(Ref ref) async {
   final list = data as List;
   return list.map((e) => AudioTrack.fromJson(e as Map<String, dynamic>)).toList();
 }
+
+/// Loads sutta plain text for the currently playing chanting track.
+final chantingSuttaTextProvider =
+    FutureProvider.autoDispose.family<String?, String>((ref, uid) async {
+  final db = ref.watch(appDatabaseProvider);
+  final sutta = await db.textsDao.getSuttaByUidAnyLanguage(uid);
+  return sutta?.contentPlain;
+});
 
 class ChantingScreen extends ConsumerWidget {
   const ChantingScreen({super.key});
@@ -107,6 +117,12 @@ class ChantingScreen extends ConsumerWidget {
               ),
             ),
           ),
+          // Chanting text auto-scroll when track has suttaUid
+          if (currentTrack != null && currentTrack.suttaUid != null)
+            _ChantingTextSection(
+              suttaUid: currentTrack.suttaUid!,
+              service: service,
+            ),
           // Inline now-playing bar
           if (currentTrack != null) _InlineNowPlaying(service: service),
         ],
@@ -134,6 +150,39 @@ class ChantingScreen extends ConsumerWidget {
     final m = d.inMinutes;
     final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$m:$s';
+  }
+}
+
+// ── Chanting Text Section ─────────────────────────────────────────────────────
+
+class _ChantingTextSection extends ConsumerWidget {
+  const _ChantingTextSection({
+    required this.suttaUid,
+    required this.service,
+  });
+
+  final String suttaUid;
+  final AudioPlaybackService service;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textAsync = ref.watch(chantingSuttaTextProvider(suttaUid));
+
+    return textAsync.when(
+      data: (text) {
+        if (text == null || text.isEmpty) return const SizedBox.shrink();
+        return SizedBox(
+          height: 200,
+          child: ChantingTextView(
+            text: text,
+            positionStream: service.positionStream,
+            durationStream: service.durationStream,
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
   }
 }
 

@@ -23,6 +23,14 @@ class ContentPack {
   final String? nikaya;
   final String? version;
 
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ContentPack && packId == other.packId;
+
+  @override
+  int get hashCode => packId.hashCode;
+
   factory ContentPack.fromJson(Map<String, dynamic> json) => ContentPack(
         packId: json['pack_id'] as String,
         packName: json['pack_name'] as String,

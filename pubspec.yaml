@@ -51,6 +51,10 @@ dependencies:
   share_plus: ^10.0.0
   pdf: ^3.10.8
   url_launcher: ^6.3.0
+  screenshot: ^3.0.0
+
+  # Text-to-Speech
+  flutter_tts: ^4.2.0
 
   # Crypto
   crypto: ^3.0.3
@@ -106,6 +110,7 @@ flutter:
     - assets/audio/chanting_manifest.json
     - assets/audio/meditation_manifest.json
     - assets/audio/talks_manifest.json
+    - assets/data/parallels.json
 
   fonts:
     - family: NotoSerif

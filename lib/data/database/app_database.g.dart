@@ -7595,6 +7595,269 @@ class PaliDictionaryCompanion extends UpdateCompanion<PaliDictionaryEntry> {
   }
 }
 
+class $ReadingStreaksTable extends ReadingStreaks
+    with TableInfo<$ReadingStreaksTable, ReadingStreak> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReadingStreaksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _dateMeta = const VerificationMeta('date');
+  @override
+  late final GeneratedColumn<String> date = GeneratedColumn<String>(
+      'date', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  static const VerificationMeta _minutesReadMeta =
+      const VerificationMeta('minutesRead');
+  @override
+  late final GeneratedColumn<int> minutesRead = GeneratedColumn<int>(
+      'minutes_read', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _suttasReadMeta =
+      const VerificationMeta('suttasRead');
+  @override
+  late final GeneratedColumn<int> suttasRead = GeneratedColumn<int>(
+      'suttas_read', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  @override
+  List<GeneratedColumn> get $columns => [id, date, minutesRead, suttasRead];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'reading_streaks';
+  @override
+  VerificationContext validateIntegrity(Insertable<ReadingStreak> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('date')) {
+      context.handle(
+          _dateMeta, date.isAcceptableOrUnknown(data['date']!, _dateMeta));
+    } else if (isInserting) {
+      context.missing(_dateMeta);
+    }
+    if (data.containsKey('minutes_read')) {
+      context.handle(
+          _minutesReadMeta,
+          minutesRead.isAcceptableOrUnknown(
+              data['minutes_read']!, _minutesReadMeta));
+    }
+    if (data.containsKey('suttas_read')) {
+      context.handle(
+          _suttasReadMeta,
+          suttasRead.isAcceptableOrUnknown(
+              data['suttas_read']!, _suttasReadMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ReadingStreak map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReadingStreak(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      date: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}date'])!,
+      minutesRead: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}minutes_read'])!,
+      suttasRead: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}suttas_read'])!,
+    );
+  }
+
+  @override
+  $ReadingStreaksTable createAlias(String alias) {
+    return $ReadingStreaksTable(attachedDatabase, alias);
+  }
+}
+
+class ReadingStreak extends DataClass implements Insertable<ReadingStreak> {
+  final int id;
+  final String date;
+  final int minutesRead;
+  final int suttasRead;
+  const ReadingStreak(
+      {required this.id,
+      required this.date,
+      required this.minutesRead,
+      required this.suttasRead});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['date'] = Variable<String>(date);
+    map['minutes_read'] = Variable<int>(minutesRead);
+    map['suttas_read'] = Variable<int>(suttasRead);
+    return map;
+  }
+
+  ReadingStreaksCompanion toCompanion(bool nullToAbsent) {
+    return ReadingStreaksCompanion(
+      id: Value(id),
+      date: Value(date),
+      minutesRead: Value(minutesRead),
+      suttasRead: Value(suttasRead),
+    );
+  }
+
+  factory ReadingStreak.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReadingStreak(
+      id: serializer.fromJson<int>(json['id']),
+      date: serializer.fromJson<String>(json['date']),
+      minutesRead: serializer.fromJson<int>(json['minutesRead']),
+      suttasRead: serializer.fromJson<int>(json['suttasRead']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'date': serializer.toJson<String>(date),
+      'minutesRead': serializer.toJson<int>(minutesRead),
+      'suttasRead': serializer.toJson<int>(suttasRead),
+    };
+  }
+
+  ReadingStreak copyWith(
+          {int? id, String? date, int? minutesRead, int? suttasRead}) =>
+      ReadingStreak(
+        id: id ?? this.id,
+        date: date ?? this.date,
+        minutesRead: minutesRead ?? this.minutesRead,
+        suttasRead: suttasRead ?? this.suttasRead,
+      );
+  ReadingStreak copyWithCompanion(ReadingStreaksCompanion data) {
+    return ReadingStreak(
+      id: data.id.present ? data.id.value : this.id,
+      date: data.date.present ? data.date.value : this.date,
+      minutesRead:
+          data.minutesRead.present ? data.minutesRead.value : this.minutesRead,
+      suttasRead:
+          data.suttasRead.present ? data.suttasRead.value : this.suttasRead,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReadingStreak(')
+          ..write('id: $id, ')
+          ..write('date: $date, ')
+          ..write('minutesRead: $minutesRead, ')
+          ..write('suttasRead: $suttasRead')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, date, minutesRead, suttasRead);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReadingStreak &&
+          other.id == this.id &&
+          other.date == this.date &&
+          other.minutesRead == this.minutesRead &&
+          other.suttasRead == this.suttasRead);
+}
+
+class ReadingStreaksCompanion extends UpdateCompanion<ReadingStreak> {
+  final Value<int> id;
+  final Value<String> date;
+  final Value<int> minutesRead;
+  final Value<int> suttasRead;
+  const ReadingStreaksCompanion({
+    this.id = const Value.absent(),
+    this.date = const Value.absent(),
+    this.minutesRead = const Value.absent(),
+    this.suttasRead = const Value.absent(),
+  });
+  ReadingStreaksCompanion.insert({
+    this.id = const Value.absent(),
+    required String date,
+    this.minutesRead = const Value.absent(),
+    this.suttasRead = const Value.absent(),
+  }) : date = Value(date);
+  static Insertable<ReadingStreak> custom({
+    Expression<int>? id,
+    Expression<String>? date,
+    Expression<int>? minutesRead,
+    Expression<int>? suttasRead,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (date != null) 'date': date,
+      if (minutesRead != null) 'minutes_read': minutesRead,
+      if (suttasRead != null) 'suttas_read': suttasRead,
+    });
+  }
+
+  ReadingStreaksCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? date,
+      Value<int>? minutesRead,
+      Value<int>? suttasRead}) {
+    return ReadingStreaksCompanion(
+      id: id ?? this.id,
+      date: date ?? this.date,
+      minutesRead: minutesRead ?? this.minutesRead,
+      suttasRead: suttasRead ?? this.suttasRead,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<String>(date.value);
+    }
+    if (minutesRead.present) {
+      map['minutes_read'] = Variable<int>(minutesRead.value);
+    }
+    if (suttasRead.present) {
+      map['suttas_read'] = Variable<int>(suttasRead.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReadingStreaksCompanion(')
+          ..write('id: $id, ')
+          ..write('date: $date, ')
+          ..write('minutesRead: $minutesRead, ')
+          ..write('suttasRead: $suttasRead')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7622,6 +7885,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $UserTranslationsTable(this);
   late final $UserCommentaryTable userCommentary = $UserCommentaryTable(this);
   late final $PaliDictionaryTable paliDictionary = $PaliDictionaryTable(this);
+  late final $ReadingStreaksTable readingStreaks = $ReadingStreaksTable(this);
   late final TextsDao textsDao = TextsDao(this as AppDatabase);
   late final SearchDao searchDao = SearchDao(this as AppDatabase);
   late final StudyToolsDao studyToolsDao = StudyToolsDao(this as AppDatabase);
@@ -7632,6 +7896,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final UserTranslationsDao userTranslationsDao =
       UserTranslationsDao(this as AppDatabase);
   late final DictionaryDao dictionaryDao = DictionaryDao(this as AppDatabase);
+  late final StreaksDao streaksDao = StreaksDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7654,7 +7919,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         audioCacheEntries,
         userTranslations,
         userCommentary,
-        paliDictionary
+        paliDictionary,
+        readingStreaks
       ];
 }
 
@@ -11655,6 +11921,159 @@ typedef $$PaliDictionaryTableProcessedTableManager = ProcessedTableManager<
     ),
     PaliDictionaryEntry,
     PrefetchHooks Function()>;
+typedef $$ReadingStreaksTableCreateCompanionBuilder = ReadingStreaksCompanion
+    Function({
+  Value<int> id,
+  required String date,
+  Value<int> minutesRead,
+  Value<int> suttasRead,
+});
+typedef $$ReadingStreaksTableUpdateCompanionBuilder = ReadingStreaksCompanion
+    Function({
+  Value<int> id,
+  Value<String> date,
+  Value<int> minutesRead,
+  Value<int> suttasRead,
+});
+
+class $$ReadingStreaksTableFilterComposer
+    extends Composer<_$AppDatabase, $ReadingStreaksTable> {
+  $$ReadingStreaksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get date => $composableBuilder(
+      column: $table.date, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get minutesRead => $composableBuilder(
+      column: $table.minutesRead, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get suttasRead => $composableBuilder(
+      column: $table.suttasRead, builder: (column) => ColumnFilters(column));
+}
+
+class $$ReadingStreaksTableOrderingComposer
+    extends Composer<_$AppDatabase, $ReadingStreaksTable> {
+  $$ReadingStreaksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get date => $composableBuilder(
+      column: $table.date, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get minutesRead => $composableBuilder(
+      column: $table.minutesRead, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get suttasRead => $composableBuilder(
+      column: $table.suttasRead, builder: (column) => ColumnOrderings(column));
+}
+
+class $$ReadingStreaksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ReadingStreaksTable> {
+  $$ReadingStreaksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<int> get minutesRead => $composableBuilder(
+      column: $table.minutesRead, builder: (column) => column);
+
+  GeneratedColumn<int> get suttasRead => $composableBuilder(
+      column: $table.suttasRead, builder: (column) => column);
+}
+
+class $$ReadingStreaksTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ReadingStreaksTable,
+    ReadingStreak,
+    $$ReadingStreaksTableFilterComposer,
+    $$ReadingStreaksTableOrderingComposer,
+    $$ReadingStreaksTableAnnotationComposer,
+    $$ReadingStreaksTableCreateCompanionBuilder,
+    $$ReadingStreaksTableUpdateCompanionBuilder,
+    (
+      ReadingStreak,
+      BaseReferences<_$AppDatabase, $ReadingStreaksTable, ReadingStreak>
+    ),
+    ReadingStreak,
+    PrefetchHooks Function()> {
+  $$ReadingStreaksTableTableManager(
+      _$AppDatabase db, $ReadingStreaksTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReadingStreaksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ReadingStreaksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ReadingStreaksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> date = const Value.absent(),
+            Value<int> minutesRead = const Value.absent(),
+            Value<int> suttasRead = const Value.absent(),
+          }) =>
+              ReadingStreaksCompanion(
+            id: id,
+            date: date,
+            minutesRead: minutesRead,
+            suttasRead: suttasRead,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String date,
+            Value<int> minutesRead = const Value.absent(),
+            Value<int> suttasRead = const Value.absent(),
+          }) =>
+              ReadingStreaksCompanion.insert(
+            id: id,
+            date: date,
+            minutesRead: minutesRead,
+            suttasRead: suttasRead,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ReadingStreaksTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ReadingStreaksTable,
+    ReadingStreak,
+    $$ReadingStreaksTableFilterComposer,
+    $$ReadingStreaksTableOrderingComposer,
+    $$ReadingStreaksTableAnnotationComposer,
+    $$ReadingStreaksTableCreateCompanionBuilder,
+    $$ReadingStreaksTableUpdateCompanionBuilder,
+    (
+      ReadingStreak,
+      BaseReferences<_$AppDatabase, $ReadingStreaksTable, ReadingStreak>
+    ),
+    ReadingStreak,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -11695,4 +12114,6 @@ class $AppDatabaseManager {
       $$UserCommentaryTableTableManager(_db, _db.userCommentary);
   $$PaliDictionaryTableTableManager get paliDictionary =>
       $$PaliDictionaryTableTableManager(_db, _db.paliDictionary);
+  $$ReadingStreaksTableTableManager get readingStreaks =>
+      $$ReadingStreaksTableTableManager(_db, _db.readingStreaks);
 }

@@ -405,15 +405,40 @@ class _TeacherBrowse extends ConsumerWidget {
       ),
     );
 
-    if (result != null && result.isNotEmpty) {
+    if (result != null && result.isNotEmpty && context.mounted) {
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 12),
+              Text('Resolving channel...'),
+            ],
+          ),
+          duration: Duration(seconds: 30),
+        ),
+      );
+
       try {
         final ytService = ref.read(youtubeServiceProvider);
-        await ytService.addChannel(result);
+        final channel = await ytService.addChannel(result);
         ref.invalidate(teacherChannelsProvider);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Added ${channel.name}')),
+          );
+        }
       } catch (e) {
         if (context.mounted) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Could not add channel: $e')),
+            SnackBar(content: Text('$e')),
           );
         }
       }

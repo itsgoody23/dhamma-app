@@ -1,6 +1,14 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../database/app_database.dart';
+import '../../shared/widgets/sutta_share_card.dart';
 
 /// Wraps share_plus to provide sutta-aware sharing with CC-BY attribution.
 ///
@@ -37,6 +45,83 @@ class ShareService {
       shareText,
       subject: sutta.title,
     );
+  }
+
+  /// Share a passage as a styled card image.
+  static Future<void> shareAsImage(
+    SuttaText sutta, {
+    String? selectedText,
+    ShareCardStyle style = ShareCardStyle.forest,
+  }) async {
+    final passage = _resolvePassage(sutta, selectedText);
+    final reference = '${sutta.title} (${sutta.uid})';
+
+    // Render card widget to image
+    final widget = MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: SuttaShareCard(
+            passage: passage,
+            reference: reference,
+            style: style,
+          ),
+        ),
+      ),
+    );
+
+    final pngBytes = await _renderWidgetToImage(widget, const Size(600, 800));
+    if (pngBytes == null) return;
+
+    // Write to temp file and share
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/sutta_share.png');
+    await file.writeAsBytes(pngBytes);
+
+    await Share.shareXFiles(
+      [XFile(file.path)],
+      subject: sutta.title,
+      text: '— ${_buildAttribution(sutta)}',
+    );
+  }
+
+  static Future<Uint8List?> _renderWidgetToImage(
+    Widget widget,
+    Size size,
+  ) async {
+    final repaintBoundary = RenderRepaintBoundary();
+    final view = ui.PlatformDispatcher.instance.implicitView!;
+    final renderView = RenderView(
+      view: view,
+      child: RenderPositionedBox(
+        alignment: Alignment.center,
+        child: repaintBoundary,
+      ),
+      configuration: ViewConfiguration(
+        logicalConstraints: BoxConstraints.tight(size),
+        devicePixelRatio: 3.0,
+      ),
+    );
+
+    final pipelineOwner = PipelineOwner()..rootNode = renderView;
+    final buildOwner = BuildOwner(focusManager: FocusManager());
+
+    final rootElement = RenderObjectToWidgetAdapter<RenderBox>(
+      container: repaintBoundary,
+      debugShortDescription: 'share_card',
+      child: widget,
+    ).attachToRenderTree(buildOwner);
+
+    buildOwner.buildScope(rootElement);
+    pipelineOwner.flushLayout();
+    pipelineOwner.flushCompositingBits();
+    pipelineOwner.flushPaint();
+
+    final image = await repaintBoundary.toImage(pixelRatio: 3.0);
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    image.dispose();
+    return byteData?.buffer.asUint8List();
   }
 
   // ── Internals ────────────────────────────────────────────────────────────

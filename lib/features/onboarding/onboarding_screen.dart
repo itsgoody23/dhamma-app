@@ -11,6 +11,8 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/extensions/l10n_extension.dart';
 import '../../core/routing/routes.dart';
 import '../../data/models/content_pack.dart';
+import '../../data/services/pack_download_service.dart';
+import '../../shared/providers/preferences_provider.dart';
 import '../downloads/downloads_screen.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -51,6 +53,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   void _next() {
     if (_page < 4) {
+      // When advancing past the language page, set the content language
+      if (_page == 1 && _selectedLanguage != null) {
+        const contentLanguages = {'en', 'pli', 'de', 'fr', 'es'};
+        final contentLang = contentLanguages.contains(_selectedLanguage)
+            ? _selectedLanguage!
+            : 'en';
+        ref.read(readerLanguageProvider.notifier).setLanguage(contentLang);
+      }
       HapticFeedback.lightImpact();
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
@@ -83,7 +93,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<void> _startDownload() async {
     if (_selectedPack == null) {
-      _next();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a pack to download')),
+      );
       return;
     }
     setState(() => _downloading = true);
@@ -95,7 +107,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         (p) {
           if (mounted) {
             setState(() => _downloadFraction = p.fraction);
-            if (p.isDone) {
+            if (p.state == DownloadState.completed) {
+              setState(() => _downloading = false);
               _next();
             }
           }
@@ -361,8 +374,14 @@ class _DownloadPage extends ConsumerWidget {
                 final filtered = language != null
                     ? packs.where((p) => p.language == language).toList()
                     : packs;
-                return RadioGroup<ContentPack?>(
-                  groupValue: selectedPack,
+                if (filtered.isEmpty) {
+                  return Center(
+                    child: Text(context.l10n.onboardingDownloadError),
+                  );
+                }
+                final effective = selectedPack ?? filtered.first;
+                return RadioGroup<ContentPack>(
+                  groupValue: effective,
                   onChanged: (p) {
                     if (p != null) onPackSelected(p);
                   },
