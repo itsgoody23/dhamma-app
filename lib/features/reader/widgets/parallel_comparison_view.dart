@@ -176,8 +176,8 @@ class _ParallelComparisonViewState
                   // Linked scroll toggle
                   Tooltip(
                     message: _linkedScrolling
-                        ? 'Disable linked scrolling'
-                        : 'Enable linked scrolling',
+                        ? 'Disable scroll sync'
+                        : 'Enable scroll sync',
                     child: InkWell(
                       onTap: () => setState(
                           () => _linkedScrolling = !_linkedScrolling),
@@ -187,7 +187,9 @@ class _ParallelComparisonViewState
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.link,
+                              _linkedScrolling
+                                  ? Icons.sync
+                                  : Icons.sync_disabled,
                               size: 16,
                               color: _linkedScrolling
                                   ? AppColors.green
@@ -195,7 +197,7 @@ class _ParallelComparisonViewState
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'Linked',
+                              'Sync scroll',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: _linkedScrolling

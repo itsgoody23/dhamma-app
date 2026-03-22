@@ -20,6 +20,7 @@ class SuttaTab {
   const SuttaTab({
     required this.uid,
     required this.abbrev,
+    this.title,
     this.scrollPosition = 0,
   });
 
@@ -27,22 +28,29 @@ class SuttaTab {
 
   /// Always the abbreviated form e.g. "DN 1" — not user-configurable.
   final String abbrev;
+
+  /// Human-readable sutta name e.g. "Brahmajāla Sutta". Populated asynchronously
+  /// once the reader loads the sutta; may be null until then.
+  final String? title;
   final int scrollPosition;
 
-  SuttaTab copyWith({int? scrollPosition}) => SuttaTab(
+  SuttaTab copyWith({int? scrollPosition, String? title}) => SuttaTab(
         uid: uid,
         abbrev: abbrev,
+        title: title ?? this.title,
         scrollPosition: scrollPosition ?? this.scrollPosition,
       );
 
   Map<String, dynamic> toJson() => {
         'uid': uid,
+        'title': title,
         'scrollPosition': scrollPosition,
       };
 
   factory SuttaTab.fromJson(Map<String, dynamic> json) => SuttaTab(
         uid: json['uid'] as String,
         abbrev: uidToAbbrev(json['uid'] as String),
+        title: json['title'] as String?,
         scrollPosition: (json['scrollPosition'] as num?)?.toInt() ?? 0,
       );
 }
@@ -153,6 +161,17 @@ class TabsNotifier extends Notifier<TabsState> {
     final idx = state.tabs.indexWhere((t) => t.uid == state.activeUid);
     final prev = (idx - 1 + state.tabs.length) % state.tabs.length;
     setActive(state.tabs[prev].uid);
+  }
+
+  /// Updates the human-readable title of the tab for [uid].
+  /// Called by ReaderScreen once the sutta data has loaded.
+  void updateTabTitle(String uid, String title) {
+    final tabs = state.tabs.map((t) {
+      if (t.uid == uid) return t.copyWith(title: title);
+      return t;
+    }).toList();
+    state = state.copyWith(tabs: tabs);
+    _persist();
   }
 
   /// Replaces [oldUid] tab with [newUid] in-place (used for Next/Prev sutta navigation

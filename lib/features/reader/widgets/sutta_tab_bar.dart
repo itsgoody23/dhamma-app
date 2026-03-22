@@ -28,7 +28,7 @@ class SuttaTabBar extends ConsumerWidget {
     final hideTabChips = !isTablet && tabs.length < 2;
 
     return Container(
-      height: 40,
+      height: 52,
       color: Theme.of(context)
           .colorScheme
           .surfaceContainerHighest
@@ -130,14 +130,44 @@ class _TabChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              tab.abbrev,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight:
-                    isActive ? FontWeight.w700 : FontWeight.w500,
-                color: isActive ? AppColors.green : null,
-              ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  tab.abbrev,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: isActive
+                        ? AppColors.green.withValues(alpha: 0.75)
+                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45),
+                  ),
+                ),
+                if (tab.title != null)
+                  SizedBox(
+                    width: 110,
+                    child: Text(
+                      tab.title!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                        color: isActive ? AppColors.green : null,
+                      ),
+                    ),
+                  )
+                else
+                  Text(
+                    tab.abbrev,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                      color: isActive ? AppColors.green : null,
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(width: 4),
             GestureDetector(

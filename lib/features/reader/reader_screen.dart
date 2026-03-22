@@ -791,6 +791,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final lang = _activeLanguage.isEmpty ? widget.language : _activeLanguage;
     final suttaAsync = ref.watch(readerSuttaProvider((widget.uid, lang)));
     final isBookmarkedAsync = ref.watch(readerIsBookmarkedProvider(widget.uid));
+
+    // Update the tab title once the sutta data loads.
+    ref.listen(
+      readerSuttaProvider((widget.uid, lang)),
+      (_, next) {
+        if (next.hasValue && next.value != null) {
+          ref.read(tabsProvider.notifier).updateTabTitle(widget.uid, next.value!.title);
+        }
+      },
+      fireImmediately: true,
+    );
     final fontSize = ref.watch(readerFontSizeProvider);
     final lineSpacing = ref.watch(readerLineSpacingProvider);
     final fontFamily = ref.watch(readerFontFamilyProvider);
