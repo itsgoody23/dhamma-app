@@ -95,6 +95,11 @@ class LibraryScreen extends StatelessWidget {
         title: Text(context.l10n.libraryTitle),
         actions: [
           IconButton(
+            icon: const Icon(Icons.download_outlined),
+            onPressed: () => context.push(Routes.downloads),
+            tooltip: 'Downloads',
+          ),
+          IconButton(
             icon: const Icon(Icons.settings_outlined),
             onPressed: () => context.push(Routes.settings),
             tooltip: 'Settings',

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -48,80 +47,65 @@ class ShareService {
   }
 
   /// Share a passage as a styled card image.
+  ///
+  /// Requires a [BuildContext] to insert a temporary overlay for rendering.
   static Future<void> shareAsImage(
+    BuildContext context,
     SuttaText sutta, {
     String? selectedText,
     ShareCardStyle style = ShareCardStyle.forest,
   }) async {
     final passage = _resolvePassage(sutta, selectedText);
     final reference = '${sutta.title} (${sutta.uid})';
+    final repaintKey = GlobalKey();
 
-    // Render card widget to image
-    final widget = MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: SuttaShareCard(
-            passage: passage,
-            reference: reference,
-            style: style,
+    // Temporarily insert the share card into the existing overlay so Flutter
+    // renders it properly, then capture via RepaintBoundary.
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => Positioned(
+        left: -4000,
+        top: 0,
+        width: 600,
+        height: 800,
+        child: Material(
+          child: RepaintBoundary(
+            key: repaintKey,
+            child: SuttaShareCard(
+              passage: passage,
+              reference: reference,
+              style: style,
+            ),
           ),
         ),
       ),
     );
 
-    final pngBytes = await _renderWidgetToImage(widget, const Size(600, 800));
-    if (pngBytes == null) return;
+    Overlay.of(context).insert(entry);
+    // Wait for the widget to be laid out and painted.
+    await WidgetsBinding.instance.endOfFrame;
 
-    // Write to temp file and share
-    final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/sutta_share.png');
-    await file.writeAsBytes(pngBytes);
+    try {
+      final boundary =
+          repaintKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
 
-    await Share.shareXFiles(
-      [XFile(file.path)],
-      subject: sutta.title,
-      text: '— ${_buildAttribution(sutta)}',
-    );
-  }
+      if (byteData == null) return;
 
-  static Future<Uint8List?> _renderWidgetToImage(
-    Widget widget,
-    Size size,
-  ) async {
-    final repaintBoundary = RenderRepaintBoundary();
-    final view = ui.PlatformDispatcher.instance.implicitView!;
-    final renderView = RenderView(
-      view: view,
-      child: RenderPositionedBox(
-        alignment: Alignment.center,
-        child: repaintBoundary,
-      ),
-      configuration: ViewConfiguration(
-        logicalConstraints: BoxConstraints.tight(size),
-        devicePixelRatio: 3.0,
-      ),
-    );
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/sutta_share.png');
+      await file.writeAsBytes(byteData.buffer.asUint8List());
 
-    final pipelineOwner = PipelineOwner()..rootNode = renderView;
-    final buildOwner = BuildOwner(focusManager: FocusManager());
-
-    final rootElement = RenderObjectToWidgetAdapter<RenderBox>(
-      container: repaintBoundary,
-      debugShortDescription: 'share_card',
-      child: widget,
-    ).attachToRenderTree(buildOwner);
-
-    buildOwner.buildScope(rootElement);
-    pipelineOwner.flushLayout();
-    pipelineOwner.flushCompositingBits();
-    pipelineOwner.flushPaint();
-
-    final image = await repaintBoundary.toImage(pixelRatio: 3.0);
-    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    image.dispose();
-    return byteData?.buffer.asUint8List();
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        subject: sutta.title,
+        text: '— ${_buildAttribution(sutta)}',
+      );
+    } finally {
+      entry.remove();
+    }
   }
 
   // ── Internals ────────────────────────────────────────────────────────────

@@ -79,6 +79,33 @@ class ProgressDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
+  /// Full study history with timestamps — for the Study → History tab.
+  Future<List<HistoryItem>> getAllHistory({int limit = 200}) async {
+    final rows = await customSelect(
+      '''
+      SELECT up.text_uid, up.last_position, up.completed, up.last_read_at,
+             t.title, t.nikaya
+      FROM user_progress up
+      JOIN texts t ON t.uid = up.text_uid
+      WHERE up.is_deleted = 0
+      ORDER BY up.last_read_at DESC
+      LIMIT ?
+      ''',
+      variables: [Variable(limit)],
+      readsFrom: {userProgress},
+    ).get();
+    return rows
+        .map((r) => HistoryItem(
+              textUid: r.read<String>('text_uid'),
+              title: r.read<String>('title'),
+              nikaya: r.read<String>('nikaya'),
+              lastPosition: r.read<int>('last_position'),
+              completed: r.read<bool>('completed'),
+              lastReadAt: r.read<DateTime>('last_read_at'),
+            ))
+        .toList();
+  }
+
   /// Recently-read items with sutta title and nikaya (avoids N+1 lookups).
   Future<List<RecentlyReadItem>> getRecentlyReadWithTitles(
       {int limit = 5}) async {
@@ -122,4 +149,23 @@ class RecentlyReadItem {
   final String nikaya;
   final int lastPosition;
   final bool completed;
+}
+
+/// Full study history entry with timestamp, used in the Study → History tab.
+class HistoryItem {
+  const HistoryItem({
+    required this.textUid,
+    required this.title,
+    required this.nikaya,
+    required this.lastPosition,
+    required this.completed,
+    required this.lastReadAt,
+  });
+
+  final String textUid;
+  final String title;
+  final String nikaya;
+  final int lastPosition;
+  final bool completed;
+  final DateTime lastReadAt;
 }

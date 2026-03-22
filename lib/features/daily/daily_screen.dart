@@ -12,9 +12,7 @@ import '../../core/routing/routes.dart';
 import '../../core/utils/uid_utils.dart';
 import '../../data/database/app_database.dart';
 import '../../data/models/reading_plan.dart';
-import '../../data/database/daos/progress_dao.dart';
 import '../../shared/providers/database_provider.dart';
-import '../../shared/widgets/nikaya_badge.dart';
 import '../../shared/widgets/sync_status_banner.dart';
 
 // ── Streak Providers ──────────────────────────────────────────────────────────
@@ -94,12 +92,6 @@ final readingPlansProvider =
       .toList();
 });
 
-final recentlyReadProvider =
-    FutureProvider.autoDispose<List<RecentlyReadItem>>((ref) async {
-  final db = ref.watch(appDatabaseProvider);
-  return db.progressDao.getRecentlyReadWithTitles(limit: 5);
-});
-
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 class DailyScreen extends ConsumerWidget {
@@ -109,7 +101,6 @@ class DailyScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dailyAsync = ref.watch(dailySuttaProvider);
     final plansAsync = ref.watch(readingPlansProvider);
-    final recentAsync = ref.watch(recentlyReadProvider);
     final streakAsync = ref.watch(currentStreakProvider);
     final todayAsync = ref.watch(todayStatsProvider);
 
@@ -135,15 +126,6 @@ class DailyScreen extends ConsumerWidget {
             loading: () => const SizedBox(
                 height: 160, child: Center(child: CircularProgressIndicator())),
             error: (e, _) => const _NoDailyCard(),
-          ),
-
-          // Continue reading section
-          recentAsync.when(
-            data: (items) => items.isNotEmpty
-                ? _ContinueReadingSection(items: items)
-                : const SizedBox.shrink(),
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
           ),
 
           const SizedBox(height: AppSizes.lg),
@@ -318,96 +300,6 @@ class _StreakCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ContinueReadingSection extends StatelessWidget {
-  const _ContinueReadingSection({required this.items});
-
-  final List<RecentlyReadItem> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: AppSizes.lg),
-        Text(
-          context.l10n.dailyContinueReading,
-          style: const TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8),
-        ),
-        const SizedBox(height: AppSizes.sm),
-        SizedBox(
-          height: 88,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
-            itemBuilder: (context, index) {
-              final item = items[index];
-              return SizedBox(
-                width: 200,
-                child: Card(
-                  margin: EdgeInsets.zero,
-                  child: InkWell(
-                    onTap: () => context.push(Routes.readerPath(item.textUid)),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  item.title,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              NikayaBadge(nikaya: item.nikaya),
-                            ],
-                          ),
-                          const Spacer(),
-                          Row(
-                            children: [
-                              if (item.completed)
-                                const Icon(Icons.check_circle,
-                                    size: 14, color: AppColors.green)
-                              else
-                                const Icon(Icons.auto_stories_outlined,
-                                    size: 14),
-                              const SizedBox(width: 6),
-                              Text(
-                                item.completed ? context.l10n.dailyCompleted : context.l10n.dailyInProgress,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurface
-                                      .withValues(alpha: 0.6),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
     );
   }
 }

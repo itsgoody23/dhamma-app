@@ -5,6 +5,8 @@ import '../../../data/services/community_service.dart';
 
 /// Renders [text] as a [SelectableText.rich] with highlight ranges applied
 /// as coloured backgrounds from the [highlights] list.
+/// Optionally renders [searchMatches] as distinct yellow highlights for
+/// in-sutta search results.
 class HighlightedText extends StatelessWidget {
   const HighlightedText({
     super.key,
@@ -15,6 +17,8 @@ class HighlightedText extends StatelessWidget {
     this.onSelectionChanged,
     this.onNoteTapped,
     this.communityHighlights = const [],
+    this.searchMatches = const [],
+    this.currentSearchMatch = -1,
   });
 
   final String text;
@@ -25,6 +29,10 @@ class HighlightedText extends StatelessWidget {
       onSelectionChanged;
   final void Function(UserHighlight highlight)? onNoteTapped;
   final List<CommunityHighlight> communityHighlights;
+  /// Character offset ranges of in-sutta search results.
+  final List<({int start, int end})> searchMatches;
+  /// Index of the currently focused search match (highlighted differently).
+  final int currentSearchMatch;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +50,9 @@ class HighlightedText extends StatelessWidget {
 
   List<InlineSpan> _buildSpans(BuildContext context) {
     if (text.isEmpty) return [];
-    if (highlights.isEmpty && communityHighlights.isEmpty) {
+    if (highlights.isEmpty &&
+        communityHighlights.isEmpty &&
+        searchMatches.isEmpty) {
       return [TextSpan(text: text)];
     }
 
@@ -78,6 +88,21 @@ class HighlightedText extends StatelessWidget {
         isCommunity: true,
       ));
     }
+    // Add search match ranges — rendered above other highlights.
+    for (var i = 0; i < searchMatches.length; i++) {
+      final m = searchMatches[i];
+      if (m.start >= m.end || m.end > text.length) continue;
+      allRanges.add(_HighlightRange(
+        start: m.start.clamp(0, text.length),
+        end: m.end.clamp(0, text.length),
+        color: i == currentSearchMatch
+            ? const Color(0xFFFF9800) // active match: orange
+            : const Color(0xFFFFEB3B), // other matches: yellow
+        isCommunity: false,
+        isSearchMatch: true,
+      ));
+    }
+
     allRanges.sort((a, b) => a.start.compareTo(b.start));
 
     final spans = <InlineSpan>[];
@@ -100,8 +125,8 @@ class HighlightedText extends StatelessWidget {
         ),
       ));
 
-      // Note indicator for personal highlights only.
-      if (!range.isCommunity && range.userHighlight != null) {
+      // Note indicator for personal highlights only (not search matches).
+      if (!range.isCommunity && !range.isSearchMatch && range.userHighlight != null) {
         final hl = range.userHighlight!;
         if (hl.note != null && hl.note!.isNotEmpty) {
           spans.add(WidgetSpan(
@@ -147,6 +172,7 @@ class _HighlightRange {
     required this.color,
     required this.isCommunity,
     this.userHighlight,
+    this.isSearchMatch = false,
   });
 
   final int start;
@@ -154,4 +180,5 @@ class _HighlightRange {
   final Color color;
   final bool isCommunity;
   final UserHighlight? userHighlight;
+  final bool isSearchMatch;
 }

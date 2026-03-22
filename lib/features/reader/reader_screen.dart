@@ -7,10 +7,10 @@ import '../../data/services/share_service.dart';
 import '../../data/services/tts_service.dart';
 import '../../shared/providers/tts_provider.dart';
 import '../../shared/widgets/sutta_share_card.dart';
-import 'widgets/discussion_sheet.dart';
 import 'widgets/parallels_section.dart';
 
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_typography.dart';
@@ -27,8 +27,11 @@ import '../../shared/widgets/translator_attribution.dart';
 import 'utils/html_parser.dart';
 import 'widgets/highlight_toolbar.dart';
 import 'widgets/highlighted_text.dart';
+import 'widgets/interlinear_reader_view.dart';
 import 'widgets/note_sheet.dart';
 import 'widgets/paginated_reader_view.dart';
+import 'widgets/parallel_comparison_view.dart';
+import 'widgets/reader_help_overlay.dart';
 import 'widgets/split_reader_view.dart';
 import '../collections/add_to_collection_sheet.dart';
 import 'widgets/my_translation_view.dart';
@@ -123,6 +126,10 @@ final readerAdjacentProvider = FutureProvider.autoDispose
   return db.textsDao.getAdjacentUids(args.$1, args.$2);
 });
 
+// ── View mode ─────────────────────────────────────────────────────────────────
+
+enum _ReaderViewMode { single, sideBySide, interlinear }
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 class ReaderScreen extends ConsumerStatefulWidget {
@@ -146,11 +153,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   final _paginatedKey = GlobalKey<PaginatedReaderViewState>();
   final _splitKey = GlobalKey<SplitReaderViewState>();
   final _keyboardFocusNode = FocusNode();
+  final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
   Timer? _progressDebounce;
   String _activeLanguage = '';
-  bool _isSplitView = false;
+  _ReaderViewMode _viewMode = _ReaderViewMode.single;
   bool _showCommentary = false;
   bool _showMyTranslation = false;
+  bool _showSearch = false;
+  bool _showHelp = false;
+  bool _showCompare = false;
+  String _searchQuery = '';
+  List<({int start, int end})> _searchMatches = [];
+  int _currentMatchIndex = -1;
   TextSelection? _currentSelection;
   String _selectionLanguage = '';
   OverlayEntry? _toolbarOverlay;
@@ -169,6 +184,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _readingStartTime = DateTime.now();
     _restoreScrollPosition();
     _scrollController.addListener(_onScroll);
+    _searchController.addListener(_onSearchChanged);
+    _checkFirstRunHelp();
+  }
+
+  Future<void> _checkFirstRunHelp() async {
+    final prefs = await SharedPreferences.getInstance();
+    final shown = prefs.getBool('reader_help_shown') ?? false;
+    if (!shown && mounted) {
+      setState(() => _showHelp = true);
+      await prefs.setBool('reader_help_shown', true);
+    }
   }
 
   @override
@@ -177,6 +203,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _progressDebounce?.cancel();
     _scrollController.dispose();
     _keyboardFocusNode.dispose();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
     // Record reading time for streak
     if (_readingStartTime != null) {
       final minutes =
@@ -294,7 +322,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     if (style == null) return;
 
     try {
-      await ShareService.shareAsImage(sutta, style: style);
+      if (!mounted) return;
+      await ShareService.shareAsImage(context, sutta, style: style);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -514,13 +543,114 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   void _onKeyEvent(KeyEvent event) {
     if (event is! KeyDownEvent) return;
     final key = event.logicalKey;
+    final ctrl = HardwareKeyboard.instance.isControlPressed;
+
+    if (ctrl && key == LogicalKeyboardKey.keyF) {
+      _toggleSearch();
+      return;
+    }
+    if (ctrl && key == LogicalKeyboardKey.keyD) {
+      _cycleViewMode();
+      return;
+    }
+    if (key == LogicalKeyboardKey.escape) {
+      if (_showSearch) {
+        setState(() {
+          _showSearch = false;
+          _searchMatches = [];
+          _currentMatchIndex = -1;
+        });
+      } else if (_showHelp) {
+        setState(() => _showHelp = false);
+      }
+      return;
+    }
     if (key == LogicalKeyboardKey.arrowRight ||
-        key == LogicalKeyboardKey.arrowDown) {
+        key == LogicalKeyboardKey.arrowDown ||
+        key == LogicalKeyboardKey.pageDown) {
       _paginatedKey.currentState?.nextPage();
     } else if (key == LogicalKeyboardKey.arrowLeft ||
-        key == LogicalKeyboardKey.arrowUp) {
+        key == LogicalKeyboardKey.arrowUp ||
+        key == LogicalKeyboardKey.pageUp) {
       _paginatedKey.currentState?.previousPage();
     }
+  }
+
+  // ── View mode cycling ─────────────────────────────────────────────────────
+
+  void _cycleViewMode() {
+    setState(() {
+      switch (_viewMode) {
+        case _ReaderViewMode.single:
+          _viewMode = _ReaderViewMode.sideBySide;
+        case _ReaderViewMode.sideBySide:
+          _viewMode = _ReaderViewMode.interlinear;
+        case _ReaderViewMode.interlinear:
+          _viewMode = _ReaderViewMode.single;
+      }
+    });
+  }
+
+  // ── In-sutta search ───────────────────────────────────────────────────────
+
+  void _toggleSearch() {
+    setState(() {
+      _showSearch = !_showSearch;
+      if (!_showSearch) {
+        _searchMatches = [];
+        _currentMatchIndex = -1;
+        _searchController.clear();
+      } else {
+        WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _searchFocusNode.requestFocus());
+      }
+    });
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.trim();
+    if (query == _searchQuery) return;
+    _searchQuery = query;
+
+    if (query.isEmpty || _currentReadableText.isEmpty) {
+      setState(() {
+        _searchMatches = [];
+        _currentMatchIndex = -1;
+      });
+      return;
+    }
+
+    try {
+      final pattern = RegExp(RegExp.escape(query), caseSensitive: false);
+      final matches = pattern.allMatches(_currentReadableText).map((m) {
+        return (start: m.start, end: m.end);
+      }).toList();
+      setState(() {
+        _searchMatches = matches;
+        _currentMatchIndex = matches.isEmpty ? -1 : 0;
+      });
+    } catch (_) {
+      setState(() {
+        _searchMatches = [];
+        _currentMatchIndex = -1;
+      });
+    }
+  }
+
+  void _nextMatch() {
+    if (_searchMatches.isEmpty) return;
+    setState(() {
+      _currentMatchIndex = (_currentMatchIndex + 1) % _searchMatches.length;
+    });
+  }
+
+  void _prevMatch() {
+    if (_searchMatches.isEmpty) return;
+    setState(() {
+      _currentMatchIndex =
+          (_currentMatchIndex - 1 + _searchMatches.length) %
+              _searchMatches.length;
+    });
   }
 
   // ── Notes ──────────────────────────────────────────────────────────────────
@@ -533,6 +663,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) => NoteSheet(textUid: widget.uid),
+    );
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  Widget _helpOverlay() {
+    return Positioned.fill(
+      child: ReaderHelpOverlay(
+        onDismiss: () => setState(() => _showHelp = false),
+      ),
     );
   }
 
@@ -552,9 +692,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final highlightsAsync =
         ref.watch(readerHighlightsProvider((widget.uid, lang)));
     final noteAsync = ref.watch(readerNoteProvider(widget.uid));
-    final paliAsync = _isSplitView
-        ? ref.watch(readerPaliSuttaProvider(widget.uid))
-        : null;
+    final needsPali = _viewMode == _ReaderViewMode.sideBySide ||
+        _viewMode == _ReaderViewMode.interlinear;
+    final paliAsync =
+        needsPali ? ref.watch(readerPaliSuttaProvider(widget.uid)) : null;
     // Only fetch adjacent for non-range UIDs (ranges don't have adjacency).
     final adjacentAsync = !isRangeUid(widget.uid)
         ? ref.watch(readerAdjacentProvider((widget.uid, lang)))
@@ -613,17 +754,29 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               );
             },
           ),
-          // Discussion button
+          // In-sutta search button
           IconButton(
-            icon: const Icon(Icons.forum_outlined),
-            tooltip: 'Discussion',
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                builder: (_) => DiscussionSheet(textUid: widget.uid),
-              );
-            },
+            icon: Icon(
+              Icons.search,
+              color: _showSearch ? AppColors.green : null,
+            ),
+            tooltip: 'Search in sutta (Ctrl+F)',
+            onPressed: _toggleSearch,
+          ),
+          // Compare translations button
+          IconButton(
+            icon: Icon(
+              Icons.compare_arrows,
+              color: _showCompare ? AppColors.green : null,
+            ),
+            tooltip: 'Compare translations',
+            onPressed: () => setState(() => _showCompare = !_showCompare),
+          ),
+          // Help button
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Reader guide',
+            onPressed: () => setState(() => _showHelp = true),
           ),
           // Note button
           IconButton(
@@ -699,62 +852,103 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               ? (ref.watch(communityHighlightsProvider(widget.uid)).value ?? [])
               : <CommunityHighlight>[];
 
-          // Split view mode
-          if (_isSplitView && paliAsync != null) {
+          // Parallel comparison mode (shown as full overlay)
+          if (_showCompare) {
+            return ParallelComparisonView(
+              uid: widget.uid,
+              primaryLanguage: lang,
+            );
+          }
+
+          // Side-by-side or interlinear — require Pali data
+          if ((_viewMode == _ReaderViewMode.sideBySide ||
+                  _viewMode == _ReaderViewMode.interlinear) &&
+              paliAsync != null) {
             final paliSutta = paliAsync.value;
             if (paliSutta != null) {
+              if (_viewMode == _ReaderViewMode.interlinear) {
+                return Stack(children: [
+                  Column(children: [
+                    _Toolbar(
+                      uid: widget.uid,
+                      activeLanguage: lang,
+                      onLanguageChanged: (l) =>
+                          setState(() => _activeLanguage = l),
+                      viewMode: _viewMode,
+                      onCycleViewMode: _cycleViewMode,
+                      showSplitToggle: true,
+                      showCommunityHighlights: _showCommunityHighlights,
+                      onToggleCommunityHighlights: () => setState(() =>
+                          _showCommunityHighlights = !_showCommunityHighlights),
+                    ),
+                    Expanded(
+                      child: InterlinearReaderView(
+                        primarySutta: sutta,
+                        paliSutta: paliSutta,
+                        fontSize: fontSize,
+                        lineSpacing: lineSpacing,
+                      ),
+                    ),
+                  ]),
+                  if (_showHelp) _helpOverlay(),
+                ]);
+              }
+
+              // Side-by-side
               final paliHighlights = ref
                       .watch(readerHighlightsProvider((widget.uid, 'pli')))
                       .value ??
                   [];
               final splitPaginated = ref.watch(readerPaginatedProvider);
-              return Column(
-                children: [
-                  _Toolbar(
-                    uid: widget.uid,
-                    activeLanguage: lang,
-                    onLanguageChanged: (l) =>
-                        setState(() => _activeLanguage = l),
-                    isSplitView: _isSplitView,
-                    onToggleSplitView: () =>
-                        setState(() => _isSplitView = !_isSplitView),
-                    showSplitToggle: true,
-                    showCommunityHighlights: _showCommunityHighlights,
-                    onToggleCommunityHighlights: () => setState(() =>
-                        _showCommunityHighlights = !_showCommunityHighlights),
-                  ),
-                  Expanded(
-                    child: SplitReaderView(
-                      key: _splitKey,
-                      primarySutta: sutta,
-                      paliSutta: paliSutta,
-                      primaryHighlights: highlights,
-                      paliHighlights: paliHighlights,
-                      fontSize: fontSize,
-                      lineSpacing: lineSpacing,
+              return Stack(children: [
+                Column(
+                  children: [
+                    _Toolbar(
+                      uid: widget.uid,
                       activeLanguage: lang,
-                      isPaginated: splitPaginated,
-                      onSelectionChanged: _onSelectionChanged,
-                      onNoteTapped: _showHighlightNoteDialog,
-                      onPageChanged: (page, total) {
-                        setState(() {
-                          _currentPage = page;
-                          _totalPages = total;
-                        });
-                      },
+                      onLanguageChanged: (l) =>
+                          setState(() => _activeLanguage = l),
+                      viewMode: _viewMode,
+                      onCycleViewMode: _cycleViewMode,
+                      showSplitToggle: true,
+                      showCommunityHighlights: _showCommunityHighlights,
+                      onToggleCommunityHighlights: () => setState(() =>
+                          _showCommunityHighlights = !_showCommunityHighlights),
                     ),
-                  ),
-                  if (splitPaginated)
-                    _PageIndicatorBar(
-                      currentPage: _currentPage,
-                      totalPages: _totalPages,
-                      onPrevPage: () =>
-                          _splitKey.currentState?.previousPage(),
-                      onNextPage: () =>
-                          _splitKey.currentState?.nextPage(),
+                    Expanded(
+                      child: SplitReaderView(
+                        key: _splitKey,
+                        primarySutta: sutta,
+                        paliSutta: paliSutta,
+                        primaryHighlights: highlights,
+                        paliHighlights: paliHighlights,
+                        fontSize: fontSize,
+                        lineSpacing: lineSpacing,
+                        activeLanguage: lang,
+                        isPaginated: splitPaginated,
+                        onSelectionChanged: _onSelectionChanged,
+                        onNoteTapped: _showHighlightNoteDialog,
+                        onPageChanged: (page, total) {
+                          setState(() {
+                            _currentPage = page;
+                            _totalPages = total;
+                          });
+                        },
+                      ),
                     ),
-                ],
-              );
+                    if (splitPaginated)
+                      _PageIndicatorBar(
+                        currentPage: _currentPage,
+                        totalPages: _totalPages,
+                        onPrevPage: () =>
+                            _splitKey.currentState?.previousPage(),
+                        onNextPage: () =>
+                            _splitKey.currentState?.nextPage(),
+                      ),
+                  ],
+                ),
+                if (_showHelp) _helpOverlay(),
+              ]);
             }
           }
 
@@ -768,130 +962,149 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           final nextUid = adjacentAsync?.value?.$2;
           final isPaginated = ref.watch(readerPaginatedProvider);
 
-          return Column(
+          return Stack(
             children: [
-              _Toolbar(
-                uid: widget.uid,
-                activeLanguage: lang,
-                onLanguageChanged: (l) =>
-                    setState(() => _activeLanguage = l),
-                isSplitView: _isSplitView,
-                onToggleSplitView: () =>
-                    setState(() => _isSplitView = !_isSplitView),
-                showSplitToggle: true,
-                showCommunityHighlights: _showCommunityHighlights,
-                onToggleCommunityHighlights: () => setState(() =>
-                    _showCommunityHighlights = !_showCommunityHighlights),
-              ),
-              Expanded(
-                child: isPaginated
-                    ? KeyboardListener(
-                        focusNode: _keyboardFocusNode,
-                        autofocus: true,
-                        onKeyEvent: _onKeyEvent,
-                        child: PaginatedReaderView(
-                        key: _paginatedKey,
-                        text: readableText,
-                        highlights: highlights,
-                        fontSize: fontSize,
-                        lineSpacing: lineSpacing,
-                        initialPage: _restoredPage,
-                        onSelectionChanged: (sel, cause) =>
-                            _onSelectionChanged(sel, cause),
-                        onNoteTapped: _showHighlightNoteDialog,
-                        onPageChanged: _onPageChanged,
-                        onLastPageReached: () {
-                          final db = ref.read(appDatabaseProvider);
-                          db.progressDao.upsertProgress(
-                            textUid: widget.uid,
-                            lastPosition: -(_totalPages),
-                            completed: true,
-                          );
-                        },
-                      ),
-                      )
-                    : GestureDetector(
-                        onHorizontalDragEnd: (details) {
-                          final velocity = details.primaryVelocity ?? 0;
-                          if (velocity > 300 && prevUid != null) {
-                            _navigateToSutta(prevUid);
-                          } else if (velocity < -300 && nextUid != null) {
-                            _navigateToSutta(nextUid);
-                          }
-                        },
-                        child: SingleChildScrollView(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSizes.md,
-                            vertical: AppSizes.lg,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              HighlightedText(
-                                text: readableText,
-                                highlights: highlights,
-                                communityHighlights: communityHl,
-                                fontSize: fontSize,
-                                lineSpacing: lineSpacing,
-                                onSelectionChanged: (sel, cause) =>
-                                    _onSelectionChanged(sel, cause),
-                                onNoteTapped: _showHighlightNoteDialog,
+              Column(
+                children: [
+                  _Toolbar(
+                    uid: widget.uid,
+                    activeLanguage: lang,
+                    onLanguageChanged: (l) =>
+                        setState(() => _activeLanguage = l),
+                    viewMode: _viewMode,
+                    onCycleViewMode: _cycleViewMode,
+                    showSplitToggle: true,
+                    showCommunityHighlights: _showCommunityHighlights,
+                    onToggleCommunityHighlights: () => setState(() =>
+                        _showCommunityHighlights = !_showCommunityHighlights),
+                  ),
+                  // In-sutta search bar
+                  if (_showSearch) _SearchBar(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    matchCount: _searchMatches.length,
+                    currentMatch: _currentMatchIndex,
+                    onNext: _nextMatch,
+                    onPrev: _prevMatch,
+                    onClose: () {
+                      setState(() {
+                        _showSearch = false;
+                        _searchMatches = [];
+                        _currentMatchIndex = -1;
+                        _searchController.clear();
+                      });
+                    },
+                  ),
+                  Expanded(
+                    child: isPaginated
+                        ? KeyboardListener(
+                            focusNode: _keyboardFocusNode,
+                            autofocus: true,
+                            onKeyEvent: _onKeyEvent,
+                            child: PaginatedReaderView(
+                              key: _paginatedKey,
+                              text: readableText,
+                              highlights: highlights,
+                              fontSize: fontSize,
+                              lineSpacing: lineSpacing,
+                              initialPage: _restoredPage,
+                              onSelectionChanged: (sel, cause) =>
+                                  _onSelectionChanged(sel, cause),
+                              onNoteTapped: _showHighlightNoteDialog,
+                              onPageChanged: _onPageChanged,
+                              onLastPageReached: () {
+                                final db = ref.read(appDatabaseProvider);
+                                db.progressDao.upsertProgress(
+                                  textUid: widget.uid,
+                                  lastPosition: -(_totalPages),
+                                  completed: true,
+                                );
+                              },
+                            ),
+                          )
+                        : GestureDetector(
+                            onHorizontalDragEnd: (details) {
+                              final velocity = details.primaryVelocity ?? 0;
+                              if (velocity > 300 && prevUid != null) {
+                                _navigateToSutta(prevUid);
+                              } else if (velocity < -300 && nextUid != null) {
+                                _navigateToSutta(nextUid);
+                              }
+                            },
+                            child: SingleChildScrollView(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.md,
+                                vertical: AppSizes.lg,
                               ),
-                              // My Translation view
-                              if (_showMyTranslation)
-                                MyTranslationView(
-                                  suttaUid: widget.uid,
-                                  fontSize: fontSize,
-                                  lineSpacing: lineSpacing,
-                                ),
-                              // User annotations/commentary
-                              if (_showCommentary)
-                                CommentaryView(suttaUid: widget.uid),
-                              const SizedBox(height: AppSizes.xl),
-                              // Parallels & cross-references
-                              ParallelsSection(uid: widget.uid),
-                              const SizedBox(height: AppSizes.lg),
-                              TranslatorAttributionWidget(
-                                translator: sutta.translator,
-                                source: sutta.source ?? 'sc',
-                                uid: sutta.uid,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  HighlightedText(
+                                    text: readableText,
+                                    highlights: highlights,
+                                    communityHighlights: communityHl,
+                                    fontSize: fontSize,
+                                    lineSpacing: lineSpacing,
+                                    onSelectionChanged: (sel, cause) =>
+                                        _onSelectionChanged(sel, cause),
+                                    onNoteTapped: _showHighlightNoteDialog,
+                                    searchMatches: _searchMatches,
+                                    currentSearchMatch: _currentMatchIndex,
+                                  ),
+                                  if (_showMyTranslation)
+                                    MyTranslationView(
+                                      suttaUid: widget.uid,
+                                      fontSize: fontSize,
+                                      lineSpacing: lineSpacing,
+                                    ),
+                                  if (_showCommentary)
+                                    CommentaryView(suttaUid: widget.uid),
+                                  const SizedBox(height: AppSizes.xl),
+                                  ParallelsSection(uid: widget.uid),
+                                  const SizedBox(height: AppSizes.lg),
+                                  TranslatorAttributionWidget(
+                                    translator: sutta.translator,
+                                    source: sutta.source ?? 'sc',
+                                    uid: sutta.uid,
+                                  ),
+                                  const SizedBox(height: AppSizes.xxl),
+                                ],
                               ),
-                              const SizedBox(height: AppSizes.xxl),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
+                  ),
+                  if (isPaginated)
+                    _PageIndicatorBar(
+                      currentPage: _currentPage,
+                      totalPages: _totalPages,
+                      prevUid: prevUid,
+                      nextUid: nextUid,
+                      onPrevPage: () =>
+                          _paginatedKey.currentState?.previousPage(),
+                      onNextPage: () =>
+                          _paginatedKey.currentState?.nextPage(),
+                      onPrevSutta: prevUid != null
+                          ? () => _navigateToSutta(prevUid)
+                          : null,
+                      onNextSutta: nextUid != null
+                          ? () => _navigateToSutta(nextUid)
+                          : null,
+                    )
+                  else if (prevUid != null || nextUid != null)
+                    _ReaderBottomBar(
+                      prevUid: prevUid,
+                      nextUid: nextUid,
+                      onPrev: prevUid != null
+                          ? () => _navigateToSutta(prevUid)
+                          : null,
+                      onNext: nextUid != null
+                          ? () => _navigateToSutta(nextUid)
+                          : null,
+                    ),
+                ],
               ),
-              // Bottom bar: page indicator (paginated) or prev/next (scroll)
-              if (isPaginated)
-                _PageIndicatorBar(
-                  currentPage: _currentPage,
-                  totalPages: _totalPages,
-                  prevUid: prevUid,
-                  nextUid: nextUid,
-                  onPrevPage: () =>
-                      _paginatedKey.currentState?.previousPage(),
-                  onNextPage: () =>
-                      _paginatedKey.currentState?.nextPage(),
-                  onPrevSutta: prevUid != null
-                      ? () => _navigateToSutta(prevUid)
-                      : null,
-                  onNextSutta: nextUid != null
-                      ? () => _navigateToSutta(nextUid)
-                      : null,
-                )
-              else if (prevUid != null || nextUid != null)
-                _ReaderBottomBar(
-                  prevUid: prevUid,
-                  nextUid: nextUid,
-                  onPrev: prevUid != null
-                      ? () => _navigateToSutta(prevUid)
-                      : null,
-                  onNext: nextUid != null
-                      ? () => _navigateToSutta(nextUid)
-                      : null,
-                ),
+              if (_showHelp) _helpOverlay(),
             ],
           );
         },
@@ -907,8 +1120,8 @@ class _Toolbar extends ConsumerWidget {
     required this.uid,
     required this.activeLanguage,
     required this.onLanguageChanged,
-    this.isSplitView = false,
-    this.onToggleSplitView,
+    this.viewMode = _ReaderViewMode.single,
+    this.onCycleViewMode,
     this.showSplitToggle = false,
     this.showCommunityHighlights = false,
     this.onToggleCommunityHighlights,
@@ -917,8 +1130,8 @@ class _Toolbar extends ConsumerWidget {
   final String uid;
   final String activeLanguage;
   final ValueChanged<String> onLanguageChanged;
-  final bool isSplitView;
-  final VoidCallback? onToggleSplitView;
+  final _ReaderViewMode viewMode;
+  final VoidCallback? onCycleViewMode;
   final bool showSplitToggle;
   final bool showCommunityHighlights;
   final VoidCallback? onToggleCommunityHighlights;
@@ -980,22 +1193,37 @@ class _Toolbar extends ConsumerWidget {
             onPressed: () =>
                 ref.read(readerPaginatedProvider.notifier).toggle(),
           ),
-          // Split view toggle
+          // View mode toggle (cycles single → side-by-side → interlinear)
           if (showSplitToggle)
             langsAsync.when(
               data: (langs) {
                 if (!langs.contains('pli') || langs.length <= 1) {
                   return const SizedBox.shrink();
                 }
+                final (icon, tooltip) = switch (viewMode) {
+                  _ReaderViewMode.single => (
+                      Icons.view_day,
+                      'Side-by-side (Ctrl+D)'
+                    ),
+                  _ReaderViewMode.sideBySide => (
+                      Icons.view_column,
+                      'Interlinear (Ctrl+D)'
+                    ),
+                  _ReaderViewMode.interlinear => (
+                      Icons.view_agenda,
+                      'Single view (Ctrl+D)'
+                    ),
+                };
                 return IconButton(
                   icon: Icon(
-                    isSplitView ? Icons.view_agenda : Icons.view_column,
+                    icon,
                     size: 20,
-                    color: isSplitView ? AppColors.green : null,
+                    color: viewMode != _ReaderViewMode.single
+                        ? AppColors.green
+                        : null,
                   ),
-                  tooltip:
-                      isSplitView ? context.l10n.readerSingleView : context.l10n.readerSideBySide,
-                  onPressed: onToggleSplitView,
+                  tooltip: tooltip,
+                  onPressed: onCycleViewMode,
                 );
               },
               loading: () => const SizedBox.shrink(),
@@ -1365,6 +1593,85 @@ class _HighlightNoteSheetState extends State<_HighlightNoteSheet> {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── In-sutta search bar ───────────────────────────────────────────────────────
+
+class _SearchBar extends StatelessWidget {
+  const _SearchBar({
+    required this.controller,
+    required this.focusNode,
+    required this.matchCount,
+    required this.currentMatch,
+    required this.onNext,
+    required this.onPrev,
+    required this.onClose,
+  });
+
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final int matchCount;
+  final int currentMatch;
+  final VoidCallback onNext;
+  final VoidCallback onPrev;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasMatches = matchCount > 0;
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      padding:
+          const EdgeInsets.symmetric(horizontal: AppSizes.sm, vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              decoration: InputDecoration(
+                hintText: 'Search in sutta…',
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                suffixText: hasMatches
+                    ? '${currentMatch + 1}/$matchCount'
+                    : (controller.text.isNotEmpty ? 'No results' : null),
+                suffixStyle: TextStyle(
+                  fontSize: 12,
+                  color: hasMatches
+                      ? AppColors.green
+                      : Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.5),
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.keyboard_arrow_up, size: 20),
+            onPressed: hasMatches ? onPrev : null,
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Previous match',
+          ),
+          IconButton(
+            icon: const Icon(Icons.keyboard_arrow_down, size: 20),
+            onPressed: hasMatches ? onNext : null,
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Next match',
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 20),
+            onPressed: onClose,
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Close search',
+          ),
+        ],
       ),
     );
   }
