@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/extensions/l10n_extension.dart';
+import '../../core/routing/routes.dart';
 
 /// Width threshold above which the shell switches from a bottom NavigationBar
 /// (phone) to a left NavigationRail (tablet / foldable).
@@ -29,6 +30,14 @@ class MainShell extends StatelessWidget {
               selectedIndex: shell.currentIndex,
               onDestinationSelected: _onDestinationSelected,
               labelType: NavigationRailLabelType.all,
+              trailing: Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: IconButton(
+                  icon: const Icon(Icons.help_outline),
+                  tooltip: 'Help & Tutorial',
+                  onPressed: () => context.push(Routes.help),
+                ),
+              ),
               destinations: [
                 NavigationRailDestination(
                   icon: const Icon(Icons.menu_book_outlined),

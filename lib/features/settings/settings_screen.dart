@@ -10,6 +10,7 @@ import '../../core/routing/routes.dart';
 import '../../shared/providers/auth_provider.dart';
 import '../../shared/providers/notification_provider.dart';
 import '../../shared/providers/preferences_provider.dart';
+import '../reader/widgets/view_settings_sheet.dart';
 
 // Note: add url_launcher: ^6.3.0 to pubspec.yaml
 
@@ -50,6 +51,16 @@ class SettingsScreen extends ConsumerWidget {
             );
           }),
           ListTile(
+            title: const Text('View Settings'),
+            subtitle: const Text('Font, size, spacing, margins, text color'),
+            leading: const Icon(Icons.text_fields_outlined),
+            onTap: () => showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              builder: (_) => const ViewSettingsSheet(),
+            ),
+          ),
+          ListTile(
             title: Text(context.l10n.settingsDefaultLanguage),
             subtitle: Text(language.toUpperCase()),
             leading: const Icon(Icons.language_outlined),
@@ -85,18 +96,6 @@ class SettingsScreen extends ConsumerWidget {
             );
           }),
 
-          Consumer(builder: (context, ref, _) {
-            final audioMobile = ref.watch(audioMobileDataProvider);
-            return SwitchListTile(
-              title: Text(context.l10n.settingsAudioMobileData),
-              subtitle: Text(context.l10n.settingsAudioMobileDataSubtitle),
-              secondary: const Icon(Icons.headphones_outlined),
-              value: audioMobile,
-              activeTrackColor: AppColors.green,
-              onChanged: (v) =>
-                  ref.read(audioMobileDataProvider.notifier).set(v),
-            );
-          }),
 
           const Divider(),
 
@@ -177,6 +176,17 @@ class SettingsScreen extends ConsumerWidget {
           const Divider(),
 
           // ── About ─────────────────────────────────────────────────────────
+          const _SectionHeader(title: 'Help'),
+          ListTile(
+            title: const Text('Help & Tutorial'),
+            subtitle:
+                const Text('Keyboard shortcuts, reader guide, features'),
+            leading: const Icon(Icons.help_outline),
+            onTap: () => context.push(Routes.help),
+          ),
+
+          const Divider(),
+
           _SectionHeader(title: context.l10n.settingsAbout),
           ListTile(
             title: Text(context.l10n.settingsLicences),

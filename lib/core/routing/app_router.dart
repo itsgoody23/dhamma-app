@@ -21,6 +21,7 @@ import '../../features/dictionary/dictionary_screen.dart';
 import '../../features/community/browse_packages_screen.dart';
 import '../../features/community/package_detail_screen.dart';
 import '../../features/community/study_groups_screen.dart';
+import '../../features/help/help_screen.dart';
 import '../../shared/widgets/main_shell.dart';
 import 'routes.dart';
 
@@ -154,6 +155,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.profile,
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: Routes.help,
+        builder: (context, state) => const HelpScreen(),
       ),
     ],
   );

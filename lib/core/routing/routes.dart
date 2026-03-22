@@ -26,6 +26,7 @@ abstract final class Routes {
   static const String studyGroups = '/community/groups';
   static const String login = '/login';
   static const String profile = '/profile';
+  static const String help = '/help';
 
   static String readerPath(String uid, {int? scrollTo}) {
     final base = '/reader/$uid';

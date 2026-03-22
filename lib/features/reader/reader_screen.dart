@@ -40,6 +40,10 @@ import 'widgets/dictionary_popup.dart';
 import '../../data/services/community_service.dart';
 import 'widgets/community_highlights.dart';
 import '../../core/extensions/l10n_extension.dart';
+import '../../shared/providers/reader_view_prefs_provider.dart';
+import '../../shared/providers/tabs_provider.dart';
+import 'widgets/sutta_tab_bar.dart';
+import 'widgets/view_settings_sheet.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -186,6 +190,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _scrollController.addListener(_onScroll);
     _searchController.addListener(_onSearchChanged);
     _checkFirstRunHelp();
+    // Register this sutta as an open tab
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(tabsProvider.notifier).openTab(widget.uid);
+    });
   }
 
   Future<void> _checkFirstRunHelp() async {
@@ -402,10 +410,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     if (_currentSelection == null || _currentSelection!.isCollapsed) return;
     final db = ref.read(appDatabaseProvider);
     final lang = _selectionLanguage.isEmpty ? _activeLanguage : _selectionLanguage;
+    // Expand selection to the smart-selection boundary before saving
+    final smartMode = ref.read(readerSmartSelectionModeProvider);
+    final expanded = _applySmartSelection(
+      _currentSelection!,
+      _currentReadableText,
+      smartMode,
+    );
     await db.studyToolsDao.saveHighlight(
       textUid: widget.uid,
-      startOffset: _currentSelection!.start,
-      endOffset: _currentSelection!.end,
+      startOffset: expanded.start,
+      endOffset: expanded.end,
       colour: hexColor,
       language: lang,
     );
@@ -553,6 +568,28 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       _cycleViewMode();
       return;
     }
+    // Tab shortcuts
+    if (ctrl && key == LogicalKeyboardKey.keyT) {
+      context.push(Routes.library);
+      return;
+    }
+    if (ctrl && key == LogicalKeyboardKey.keyW) {
+      _closeCurrentTab();
+      return;
+    }
+    final shift = HardwareKeyboard.instance.isShiftPressed;
+    if (ctrl && key == LogicalKeyboardKey.tab) {
+      if (shift) {
+        ref.read(tabsProvider.notifier).prevTab();
+      } else {
+        ref.read(tabsProvider.notifier).nextTab();
+      }
+      final newActive = ref.read(tabsProvider).activeUid;
+      if (newActive != null && newActive != widget.uid) {
+        context.pushReplacement(Routes.readerPath(newActive));
+      }
+      return;
+    }
     if (key == LogicalKeyboardKey.escape) {
       if (_showSearch) {
         setState(() {
@@ -666,6 +703,69 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
   }
 
+  // ── Tab helpers ───────────────────────────────────────────────────────────
+
+  void _closeCurrentTab() {
+    ref.read(tabsProvider.notifier).closeTab(widget.uid);
+    final tabState = ref.read(tabsProvider);
+    if (tabState.activeUid != null && tabState.activeUid != widget.uid) {
+      context.pushReplacement(Routes.readerPath(tabState.activeUid!));
+    } else if (tabState.tabs.isEmpty) {
+      context.pop();
+    }
+  }
+
+  // ── Smart selection ───────────────────────────────────────────────────────
+
+  /// Expands [selection] to the nearest boundary defined by [mode].
+  TextSelection _applySmartSelection(
+    TextSelection selection,
+    String text,
+    String mode,
+  ) {
+    if (text.isEmpty || selection.isCollapsed) return selection;
+    if (mode == SmartSelectionMode.word) return selection;
+
+    int start = selection.start.clamp(0, text.length);
+    int end = selection.end.clamp(0, text.length);
+
+    switch (mode) {
+      case SmartSelectionMode.phrase:
+        while (start > 0 &&
+            !',;'.contains(text[start - 1]) &&
+            text[start - 1] != '\n') {
+          start--;
+        }
+        while (end < text.length &&
+            !',;.!?'.contains(text[end]) &&
+            text[end] != '\n') {
+          end++;
+        }
+      case SmartSelectionMode.sentence:
+        while (start > 0 &&
+            !'.!?'.contains(text[start - 1]) &&
+            text[start - 1] != '\n') {
+          start--;
+        }
+        while (end < text.length && !'.!?'.contains(text[end])) {
+          end++;
+        }
+        if (end < text.length) end++; // include the terminating punctuation
+      case SmartSelectionMode.paragraph:
+        while (start > 0 && text[start - 1] != '\n') {
+          start--;
+        }
+        while (end < text.length && text[end] != '\n') {
+          end++;
+        }
+    }
+
+    return TextSelection(
+      baseOffset: start.clamp(0, text.length),
+      extentOffset: end.clamp(0, text.length),
+    );
+  }
+
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   Widget _helpOverlay() {
@@ -689,6 +789,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final isBookmarkedAsync = ref.watch(readerIsBookmarkedProvider(widget.uid));
     final fontSize = ref.watch(readerFontSizeProvider);
     final lineSpacing = ref.watch(readerLineSpacingProvider);
+    final fontFamily = ref.watch(readerFontFamilyProvider);
+    final textColorHex = ref.watch(readerTextColorProvider);
+    final margin = ref.watch(readerMarginProvider);
+    final textColorValue = textColorHex.isEmpty
+        ? null
+        : Color(int.parse(
+            'FF${textColorHex.replaceFirst('#', '')}',
+            radix: 16,
+          ));
     final highlightsAsync =
         ref.watch(readerHighlightsProvider((widget.uid, lang)));
     final noteAsync = ref.watch(readerNoteProvider(widget.uid));
@@ -772,6 +881,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             tooltip: 'Compare translations',
             onPressed: () => setState(() => _showCompare = !_showCompare),
           ),
+          // View settings button
+          IconButton(
+            icon: const Icon(Icons.text_fields_outlined),
+            tooltip: 'View settings',
+            onPressed: () => showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              builder: (_) => const ViewSettingsSheet(),
+            ),
+          ),
           // Help button
           IconButton(
             icon: const Icon(Icons.help_outline),
@@ -838,7 +957,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             ),
         ],
       ),
-      body: suttaAsync.when(
+      body: Column(
+        children: [
+          SuttaTabBar(currentUid: widget.uid),
+          Expanded(child: suttaAsync.when(
         loading: () => const LoadingShimmer(),
         error: (e, _) => ErrorState(message: friendlyError(e)),
         data: (sutta) {
@@ -1033,8 +1155,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                             },
                             child: SingleChildScrollView(
                               controller: _scrollController,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSizes.md,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: ReaderMargin.horizontalPadding[margin] ?? AppSizes.md,
                                 vertical: AppSizes.lg,
                               ),
                               child: Column(
@@ -1046,6 +1168,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                     communityHighlights: communityHl,
                                     fontSize: fontSize,
                                     lineSpacing: lineSpacing,
+                                    fontFamily: fontFamily,
+                                    textColor: textColorValue,
                                     onSelectionChanged: (sel, cause) =>
                                         _onSelectionChanged(sel, cause),
                                     onNoteTapped: _showHighlightNoteDialog,
@@ -1108,6 +1232,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             ],
           );
         },
+          )),
+        ],
       ),
     );
   }

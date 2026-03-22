@@ -14,6 +14,8 @@ class HighlightedText extends StatelessWidget {
     required this.highlights,
     required this.fontSize,
     this.lineSpacing = 1.7,
+    this.fontFamily,
+    this.textColor,
     this.onSelectionChanged,
     this.onNoteTapped,
     this.communityHighlights = const [],
@@ -25,12 +27,22 @@ class HighlightedText extends StatelessWidget {
   final List<UserHighlight> highlights;
   final double fontSize;
   final double lineSpacing;
+
+  /// Optional font family override (e.g. 'NotoSerif', 'Palatino', 'NotoSans').
+  /// Falls back to the theme font when null.
+  final String? fontFamily;
+
+  /// Optional text color override. Falls back to the theme body color when null.
+  final Color? textColor;
+
   final void Function(TextSelection selection, SelectionChangedCause? cause)?
       onSelectionChanged;
   final void Function(UserHighlight highlight)? onNoteTapped;
   final List<CommunityHighlight> communityHighlights;
+
   /// Character offset ranges of in-sutta search results.
   final List<({int start, int end})> searchMatches;
+
   /// Index of the currently focused search match (highlighted differently).
   final int currentSearchMatch;
 
@@ -40,9 +52,10 @@ class HighlightedText extends StatelessWidget {
     return SelectableText.rich(
       TextSpan(children: spans),
       style: TextStyle(
+        fontFamily: fontFamily,
         fontSize: fontSize,
         height: lineSpacing,
-        color: Theme.of(context).textTheme.bodyLarge?.color,
+        color: textColor ?? Theme.of(context).textTheme.bodyLarge?.color,
       ),
       onSelectionChanged: onSelectionChanged,
     );
