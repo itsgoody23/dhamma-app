@@ -9,7 +9,9 @@ import '../../core/routing/routes.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/daos/progress_dao.dart';
 import '../../shared/providers/database_provider.dart';
+import '../../shared/providers/sync_provider.dart';
 import '../collections/collections_screen.dart';
+import '../daily/daily_screen.dart';
 
 /// Looks up the sutta title for a given UID, returning a formatted string
 /// like "MN 1 — Mūlapariyāya Sutta" or falling back to the raw UID.
@@ -20,6 +22,26 @@ final suttaTitleProvider =
   if (sutta == null) return uid;
   return sutta.title;
 });
+
+// ── Study stats providers ─────────────────────────────────────────────────────
+
+final _totalHoursProvider = FutureProvider.autoDispose<int>((ref) async {
+  final db = ref.watch(appDatabaseProvider);
+  final rows = await db.customSelect(
+    'SELECT COALESCE(SUM(minutes_read), 0) as total FROM reading_streaks',
+  ).getSingle();
+  return (rows.read<int>('total') / 60).round();
+});
+
+final _completedSuttasProvider = FutureProvider.autoDispose<int>((ref) async {
+  final db = ref.watch(appDatabaseProvider);
+  final rows = await db.customSelect(
+    'SELECT COUNT(*) as cnt FROM user_progress WHERE completed = 1 AND is_deleted = 0',
+  ).getSingle();
+  return rows.read<int>('cnt');
+});
+
+// ── Screen ────────────────────────────────────────────────────────────────────
 
 class StudyToolsScreen extends ConsumerStatefulWidget {
   const StudyToolsScreen({super.key});
@@ -46,36 +68,235 @@ class _StudyToolsScreenState extends ConsumerState<StudyToolsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final syncStatus = ref.watch(syncStatusProvider);
+    final hoursAsync = ref.watch(_totalHoursProvider);
+    final completedAsync = ref.watch(_completedSuttasProvider);
+    final streakAsync = ref.watch(currentStreakProvider);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Study'),
-        bottom: TabBar(
-          controller: _tabs,
-          isScrollable: true,
-          tabs: const [
-            Tab(text: 'History'),
-            Tab(text: 'Bookmarks'),
-            Tab(text: 'Highlights'),
-            Tab(text: 'Notes'),
-            Tab(text: 'Collections'),
-            Tab(text: 'Translations'),
-            Tab(text: 'Dictionary'),
-            Tab(text: 'Community'),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header ────────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.md, vertical: AppSizes.sm),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Study Hub',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        Text(
+                          'Your progress along the Path of Wisdom.',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Sync status indicator
+                  if (syncStatus == SyncStatus.syncing)
+                    const Padding(
+                      padding: EdgeInsets.only(right: AppSizes.sm),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.green,
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          Text('SYNCING',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: AppColors.green,
+                                  fontWeight: FontWeight.w700)),
+                        ],
+                      ),
+                    )
+                  else if (syncStatus == SyncStatus.success)
+                    const Padding(
+                      padding: EdgeInsets.only(right: AppSizes.sm),
+                      child: Row(
+                        children: [
+                          Icon(Icons.sync, size: 14, color: AppColors.green),
+                          SizedBox(width: 4),
+                          Text('SYNCED',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: AppColors.green,
+                                  fontWeight: FontWeight.w700)),
+                        ],
+                      ),
+                    ),
+                  IconButton(
+                    icon: const Icon(Icons.settings_outlined, size: 22),
+                    onPressed: () => context.push(Routes.settings),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Stats row ─────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
+              child: Row(
+                children: [
+                  _StatCard(
+                    label: 'HOURS READ',
+                    value: hoursAsync.when(
+                      data: (h) => '$h',
+                      loading: () => '—',
+                      error: (_, __) => '—',
+                    ),
+                    flex: 2,
+                  ),
+                  const SizedBox(width: AppSizes.sm),
+                  _StatCard(
+                    label: 'SUTTAS DONE',
+                    value: completedAsync.when(
+                      data: (c) => '$c',
+                      loading: () => '—',
+                      error: (_, __) => '—',
+                    ),
+                    flex: 2,
+                  ),
+                  const SizedBox(width: AppSizes.sm),
+                  _StatCard(
+                    label: 'DAY STREAK',
+                    value: streakAsync.when(
+                      data: (s) => '$s',
+                      loading: () => '—',
+                      error: (_, __) => '—',
+                    ),
+                    flex: 1,
+                    accent: true,
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: AppSizes.sm),
+
+            // ── Tab bar ───────────────────────────────────────────────────
+            TabBar(
+              controller: _tabs,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              labelStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+              ),
+              indicatorColor: AppColors.green,
+              labelColor: AppColors.green,
+              unselectedLabelColor: AppColors.textTertiary,
+              dividerColor:
+                  Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+              tabs: const [
+                Tab(text: 'History'),
+                Tab(text: 'Bookmarks'),
+                Tab(text: 'Highlights'),
+                Tab(text: 'Notes'),
+                Tab(text: 'Collections'),
+                Tab(text: 'Translations'),
+                Tab(text: 'Dictionary'),
+                Tab(text: 'Community'),
+              ],
+            ),
+
+            // ── Tab content ───────────────────────────────────────────────
+            Expanded(
+              child: TabBarView(
+                controller: _tabs,
+                children: const [
+                  _HistoryTab(),
+                  _BookmarksTab(),
+                  _HighlightsTab(),
+                  _NotesTab(),
+                  _CollectionsTab(),
+                  _TranslationsTab(),
+                  _DictionaryTab(),
+                  _CommunityTab(),
+                ],
+              ),
+            ),
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabs,
-        children: const [
-          _HistoryTab(),
-          _BookmarksTab(),
-          _HighlightsTab(),
-          _NotesTab(),
-          _CollectionsTab(),
-          _TranslationsTab(),
-          _DictionaryTab(),
-          _CommunityTab(),
-        ],
+    );
+  }
+}
+
+// ── Stat card ─────────────────────────────────────────────────────────────────
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.flex,
+    this.accent = false,
+  });
+
+  final String label;
+  final String value;
+  final int flex;
+  final bool accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      flex: flex,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.sm, vertical: AppSizes.sm),
+        decoration: BoxDecoration(
+          color: accent
+              ? AppColors.greenDark
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: accent ? Colors.white : null,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.6,
+                color: accent ? Colors.white70 : AppColors.textTertiary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

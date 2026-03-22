@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/extensions/l10n_extension.dart';
 import '../../core/routing/routes.dart';
@@ -77,6 +78,42 @@ Future<List<SearchResult>> searchResults(
   );
 }
 
+// ── Curated content (static) ──────────────────────────────────────────────────
+
+class _CuratedSeries {
+  const _CuratedSeries({
+    required this.label,
+    required this.title,
+    required this.description,
+    required this.uid,
+  });
+
+  final String label;
+  final String title;
+  final String description;
+  final String uid;
+}
+
+const _featuredSeries = _CuratedSeries(
+  label: 'SPECIAL SERIES',
+  title: 'Suttas on Mindfulness',
+  description:
+      'A curated collection exploring the Satipaṭṭhāna Sutta and practical applications of presence.',
+  uid: 'mn10',
+);
+
+const _featuredCollections = [
+  (icon: Icons.menu_book_outlined, title: 'Wisdom of the Elders', sub: 'THERIGATHA', uid: 'thig'),
+  (icon: Icons.waves_outlined, title: 'Calming the Storms', sub: 'VERSES ON PEACE', uid: 'snp'),
+];
+
+const _trendingPaths = [
+  ('Dependent Origination', 'mn38'),
+  ('Five Hindrances', 'dn2'),
+  ('The Middle Way', 'mn141'),
+  ('Equanimity', 'an4.170'),
+];
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -88,11 +125,13 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _controller = TextEditingController();
+  final _focusNode = FocusNode();
   String _query = '';
 
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -109,169 +148,520 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     await db.searchDao.saveSearchTerm(query.trim());
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final filters = ref.watch(searchFiltersProvider);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _controller,
-          autofocus: false,
-          decoration: InputDecoration(
-            hintText: context.l10n.searchHint,
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            isDense: true,
-            contentPadding: EdgeInsets.zero,
-            suffixIcon: _query.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear, size: 18),
-                    onPressed: () {
-                      _controller.clear();
-                      setState(() => _query = '');
-                    },
-                  )
-                : null,
-          ),
-          onChanged: _onQueryChanged,
-          textInputAction: TextInputAction.search,
-        ),
-        actions: [
-          Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.tune_outlined),
-                onPressed: () => _showFilterSheet(context),
-                tooltip: 'Filter',
-              ),
-              if (filters.hasFilters)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-      body: _query.isEmpty
-          ? _SearchHistory(onHistoryTapped: (query) {
-              _controller.text = query;
-              _onQueryChanged(query);
-            })
-          : _SearchResults(query: _query),
-    );
-  }
-
   void _showFilterSheet(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
       builder: (_) => const _FilterSheet(),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final filters = ref.watch(searchFiltersProvider);
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ── Header ──────────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.md, vertical: AppSizes.sm),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => context.push(Routes.settings),
+                    child: CircleAvatar(
+                      radius: 18,
+                      backgroundColor:
+                          AppColors.green.withValues(alpha: 0.15),
+                      child: const Icon(Icons.person_outline,
+                          size: 20, color: AppColors.green),
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.sm),
+                  const Expanded(
+                    child: Text(
+                      'THE DIGITAL ALTAR',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.settings_outlined, size: 22),
+                    onPressed: () => context.push(Routes.settings),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Search bar ───────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                  border: Border.all(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .outline
+                        .withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const SizedBox(width: AppSizes.md),
+                    const Icon(Icons.search, size: 20,
+                        color: AppColors.textTertiary),
+                    const SizedBox(width: AppSizes.sm),
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        focusNode: _focusNode,
+                        decoration: InputDecoration(
+                          hintText: context.l10n.searchHint,
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 14),
+                          hintStyle: const TextStyle(
+                              color: AppColors.textTertiary, fontSize: 14),
+                        ),
+                        onChanged: _onQueryChanged,
+                        textInputAction: TextInputAction.search,
+                      ),
+                    ),
+                    if (_query.isNotEmpty)
+                      IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () {
+                          _controller.clear();
+                          setState(() => _query = '');
+                        },
+                      )
+                    else
+                      Stack(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.tune_outlined, size: 20),
+                            onPressed: () => _showFilterSheet(context),
+                          ),
+                          if (filters.hasFilters)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: AppSizes.sm),
+
+            // ── Filter chips row ─────────────────────────────────────────────
+            _FilterChipsRow(
+              filters: filters,
+              onShowSheet: () => _showFilterSheet(context),
+            ),
+
+            const SizedBox(height: AppSizes.xs),
+
+            // ── Body ─────────────────────────────────────────────────────────
+            Expanded(
+              child: _query.isEmpty
+                  ? _SearchDiscovery(onHistoryTapped: (query) {
+                      _controller.text = query;
+                      _onQueryChanged(query);
+                    })
+                  : _SearchResults(query: _query),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-// ── Search history ────────────────────────────────────────────────────────────
+// ── Filter chips row ──────────────────────────────────────────────────────────
 
-class _SearchHistory extends ConsumerWidget {
-  const _SearchHistory({this.onHistoryTapped});
+class _FilterChipsRow extends StatelessWidget {
+  const _FilterChipsRow(
+      {required this.filters, required this.onShowSheet});
+
+  final SearchFilters filters;
+  final VoidCallback onShowSheet;
+
+  @override
+  Widget build(BuildContext context) {
+    final chips = [
+      ('PALI', 'pli'),
+      ('ENGLISH', 'en'),
+      ('NIKAYAS', null), // opens sheet
+      ('VINAYA', null),
+    ];
+
+    return SizedBox(
+      height: 36,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
+        children: chips.map((chip) {
+          final label = chip.$1;
+          final lang = chip.$2;
+          final isActive = lang != null && filters.language == lang;
+          return Padding(
+            padding: const EdgeInsets.only(right: AppSizes.sm),
+            child: GestureDetector(
+              onTap: onShowSheet,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? AppColors.green
+                      : Colors.transparent,
+                  borderRadius:
+                      BorderRadius.circular(AppSizes.radiusFull),
+                  border: Border.all(
+                    color: isActive
+                        ? AppColors.green
+                        : Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isActive
+                        ? Colors.white
+                        : Theme.of(context).colorScheme.onSurface,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// ── Search discovery (empty state) ────────────────────────────────────────────
+
+class _SearchDiscovery extends ConsumerWidget {
+  const _SearchDiscovery({this.onHistoryTapped});
 
   final ValueChanged<String>? onHistoryTapped;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(
-      StreamProvider((ref) =>
+      StreamProvider.autoDispose((ref) =>
           ref.watch(appDatabaseProvider).searchDao.watchSearchHistory()),
     );
 
-    return historyAsync.when(
-      data: (history) {
-        if (history.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.search, size: 48, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  Text(
-                    context.l10n.searchEmpty,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    context.l10n.searchTip,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
+      children: [
+        // ── Curated Discovery ────────────────────────────────────────────
+        const _SectionLabel('CURATED DISCOVERY'),
+        const SizedBox(height: AppSizes.sm),
+        _CuratedHeroCard(series: _featuredSeries),
+        const SizedBox(height: AppSizes.md),
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      context.l10n.searchRecentSearches,
-                      style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => ref
-                        .read(appDatabaseProvider)
-                        .searchDao
-                        .clearSearchHistory(),
-                    child: Text(context.l10n.searchClear, style: const TextStyle(fontSize: 12)),
-                  ),
-                ],
+        // ── Featured collection cards ────────────────────────────────────
+        Row(
+          children: _featuredCollections.map((col) {
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: col == _featuredCollections.first
+                      ? AppSizes.sm / 2
+                      : 0,
+                  left: col == _featuredCollections.last
+                      ? AppSizes.sm / 2
+                      : 0,
+                ),
+                child: _FeaturedCollectionCard(
+                  icon: col.icon,
+                  title: col.title,
+                  sub: col.sub,
+                  uid: col.uid,
+                ),
               ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: history.length,
-                itemBuilder: (context, index) {
-                  final item = history[index];
-                  return ListTile(
-                    leading: const Icon(Icons.history, size: 18),
-                    title: Text(item.query),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.close, size: 16),
+            );
+          }).toList(),
+        ),
+
+        const SizedBox(height: AppSizes.lg),
+
+        // ── Recent Activity ──────────────────────────────────────────────
+        historyAsync.when(
+          data: (history) {
+            if (history.isEmpty) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                        child: _SectionLabel('RECENT ACTIVITY')),
+                    TextButton(
                       onPressed: () => ref
                           .read(appDatabaseProvider)
                           .searchDao
-                          .deleteSearchTerm(item.id),
+                          .clearSearchHistory(),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.green,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      child: const Text('CLEAR',
+                          style: TextStyle(
+                              fontSize: 11, fontWeight: FontWeight.w700)),
                     ),
-                    onTap: () => onHistoryTapped?.call(item.query),
-                  );
-                },
+                  ],
+                ),
+                const SizedBox(height: AppSizes.xs),
+                ...history.take(5).map((item) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.history_outlined,
+                          size: 18, color: AppColors.textTertiary),
+                      title: Text(item.query,
+                          style: const TextStyle(fontSize: 14)),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.close, size: 16,
+                            color: AppColors.textTertiary),
+                        onPressed: () => ref
+                            .read(appDatabaseProvider)
+                            .searchDao
+                            .deleteSearchTerm(item.id),
+                      ),
+                      onTap: () => onHistoryTapped?.call(item.query),
+                      visualDensity: VisualDensity.compact,
+                    )),
+              ],
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        ),
+
+        const SizedBox(height: AppSizes.lg),
+
+        // ── Trending Paths ───────────────────────────────────────────────
+        const _SectionLabel('TRENDING PATHS'),
+        const SizedBox(height: AppSizes.sm),
+        Wrap(
+          spacing: AppSizes.sm,
+          runSpacing: AppSizes.sm,
+          children: _trendingPaths.map((path) {
+            return GestureDetector(
+              onTap: () => context.push(Routes.readerPath(path.$2)),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.green.withValues(alpha: 0.08),
+                  borderRadius:
+                      BorderRadius.circular(AppSizes.radiusFull),
+                  border: Border.all(
+                      color: AppColors.green.withValues(alpha: 0.2)),
+                ),
+                child: Text(
+                  path.$1.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.green,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+
+        const SizedBox(height: AppSizes.xl),
+      ],
+    );
+  }
+}
+
+// ── Curated hero card ─────────────────────────────────────────────────────────
+
+class _CuratedHeroCard extends StatelessWidget {
+  const _CuratedHeroCard({required this.series});
+
+  final _CuratedSeries series;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push(Routes.readerPath(series.uid)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image placeholder
+          Container(
+            height: 160,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.green.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+            ),
+            child: Stack(
+              children: [
+                const Center(
+                  child: Icon(Icons.spa_outlined,
+                      size: 64, color: AppColors.green),
+                ),
+                Positioned(
+                  bottom: AppSizes.md,
+                  left: AppSizes.md,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    color: AppColors.greenDark,
+                    child: Text(
+                      series.label,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSizes.sm),
+          Text(
+            series.title,
+            style: Theme.of(context)
+                .textTheme
+                .headlineSmall
+                ?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            series.description,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontStyle: FontStyle.italic,
+                  color: AppColors.textSecondary,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Featured collection card ──────────────────────────────────────────────────
+
+class _FeaturedCollectionCard extends StatelessWidget {
+  const _FeaturedCollectionCard({
+    required this.icon,
+    required this.title,
+    required this.sub,
+    required this.uid,
+  });
+
+  final IconData icon;
+  final String title;
+  final String sub;
+  final String uid;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push(Routes.readerPath(uid)),
+      child: Container(
+        padding: const EdgeInsets.all(AppSizes.md),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: AppColors.green, size: 28),
+            const SizedBox(height: AppSizes.sm),
+            Text(
+              title,
+              style: const TextStyle(
+                  fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              sub,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textTertiary,
+                letterSpacing: 0.8,
               ),
             ),
           ],
-        );
-      },
-      loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Section label ─────────────────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(
+            child:
+                Divider(thickness: 0.5, color: AppColors.textTertiary)),
+        const SizedBox(width: AppSizes.sm),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.0,
+            color: AppColors.textTertiary,
+          ),
+        ),
+        const SizedBox(width: AppSizes.sm),
+        const Expanded(
+            child:
+                Divider(thickness: 0.5, color: AppColors.textTertiary)),
+      ],
     );
   }
 }
