@@ -822,6 +822,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         : null;
 
     return Scaffold(
+      backgroundColor: bgColorValue ?? Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         leading: const BackButton(),
         title: suttaAsync.when(

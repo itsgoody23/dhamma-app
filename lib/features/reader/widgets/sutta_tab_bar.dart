@@ -69,7 +69,7 @@ class SuttaTabBar extends ConsumerWidget {
               icon: const Icon(Icons.add, size: 18),
               tooltip: 'New tab (Ctrl+T)',
               padding: EdgeInsets.zero,
-              onPressed: () => context.push(Routes.library),
+              onPressed: () => context.go(Routes.library),
             ),
           ),
           const SizedBox(width: 2),

@@ -96,6 +96,12 @@ GoRouter appRouter(Ref ref) {
               builder: (context, state) => const StudyToolsScreen(),
             ),
           ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: Routes.downloads,
+              builder: (context, state) => const DownloadsScreen(),
+            ),
+          ]),
         ],
       ),
       // Reader is pushed on top of the shell (not a tab)
@@ -107,10 +113,6 @@ GoRouter appRouter(Ref ref) {
           scrollTo: int.tryParse(
               state.uri.queryParameters['scrollTo'] ?? ''),
         ),
-      ),
-      GoRoute(
-        path: Routes.downloads,
-        builder: (context, state) => const DownloadsScreen(),
       ),
       GoRoute(
         path: Routes.collections,

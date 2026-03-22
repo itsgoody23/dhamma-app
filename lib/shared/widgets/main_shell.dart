@@ -59,6 +59,11 @@ class MainShell extends StatelessWidget {
                   selectedIcon: const Icon(Icons.bookmark),
                   label: Text(context.l10n.navStudy),
                 ),
+                NavigationRailDestination(
+                  icon: const Icon(Icons.download_outlined),
+                  selectedIcon: const Icon(Icons.download),
+                  label: Text(context.l10n.navDownloads),
+                ),
               ],
             ),
             const VerticalDivider(width: 1, thickness: 1),
@@ -94,6 +99,11 @@ class MainShell extends StatelessWidget {
             icon: const Icon(Icons.bookmark_outline),
             selectedIcon: const Icon(Icons.bookmark),
             label: context.l10n.navStudy,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.download_outlined),
+            selectedIcon: const Icon(Icons.download),
+            label: context.l10n.navDownloads,
           ),
         ],
       ),

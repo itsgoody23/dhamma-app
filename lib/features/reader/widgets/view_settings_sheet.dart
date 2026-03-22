@@ -196,8 +196,33 @@ class ViewSettingsSheet extends ConsumerWidget {
                     _BgColorSwatches(
                       selected: bgColor,
                       isDark: isDark,
-                      onSelected: (hex) =>
-                          ref.read(readerBgColorProvider.notifier).set(hex),
+                      onSelected: (hex) {
+                        ref.read(readerBgColorProvider.notifier).set(hex);
+                        // Auto-couple text color for readability
+                        if (hex.isEmpty) {
+                          // Bg reset → reset text color to auto
+                          ref.read(readerTextColorProvider.notifier).set('');
+                        } else {
+                          final bg = Color(int.parse(
+                              'FF${hex.replaceFirst('#', '')}', radix: 16));
+                          final currentText = ref.read(readerTextColorProvider);
+                          if (bg.computeLuminance() < 0.1) {
+                            // Dark bg → switch to light text if not already light
+                            if (_isColorDarkOrAuto(currentText)) {
+                              ref
+                                  .read(readerTextColorProvider.notifier)
+                                  .set('#EDE6D6');
+                            }
+                          } else if (bg.computeLuminance() > 0.7) {
+                            // Light bg → switch to dark text if currently light
+                            if (_isColorLight(currentText)) {
+                              ref
+                                  .read(readerTextColorProvider.notifier)
+                                  .set('');
+                            }
+                          }
+                        }
+                      },
                     ),
 
                     // ── Smart Selection ───────────────────────────────────
@@ -279,6 +304,20 @@ Widget _RowLabel(BuildContext context, String text) {
               Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65),
         ),
   );
+}
+
+// ── Color coupling helpers ────────────────────────────────────────────────────
+
+bool _isColorDarkOrAuto(String hex) {
+  if (hex.isEmpty) return true; // auto = dark in light mode
+  final color = Color(int.parse('FF${hex.replaceFirst('#', '')}', radix: 16));
+  return color.computeLuminance() < 0.2;
+}
+
+bool _isColorLight(String hex) {
+  if (hex.isEmpty) return false;
+  final color = Color(int.parse('FF${hex.replaceFirst('#', '')}', radix: 16));
+  return color.computeLuminance() > 0.6;
 }
 
 // ── Background color swatches ─────────────────────────────────────────────────
