@@ -24,7 +24,8 @@ class SuttaTabBar extends ConsumerWidget {
     final tabs = tabsState.tabs;
 
     final isTablet = MediaQuery.sizeOf(context).width >= 600;
-    if (!isTablet && tabs.length < 2) return const SizedBox.shrink();
+    // On phone, hide tab chips when < 2 tabs, but always show the + button.
+    final hideTabChips = !isTablet && tabs.length < 2;
 
     return Container(
       height: 40,
@@ -34,30 +35,33 @@ class SuttaTabBar extends ConsumerWidget {
           .withValues(alpha: 0.55),
       child: Row(
         children: [
-          Expanded(
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              itemCount: tabs.length,
-              itemBuilder: (context, index) {
-                final tab = tabs[index];
-                final isActive = tab.uid == currentUid;
-                return _TabChip(
-                  tab: tab,
-                  isActive: isActive,
-                  onTap: () {
-                    if (!isActive) {
-                      ref.read(tabsProvider.notifier).setActive(tab.uid);
-                      context.pushReplacement(Routes.readerPath(tab.uid));
-                    }
-                  },
-                  onClose: () => _closeTab(context, ref, tab.uid),
-                );
-              },
-            ),
-          ),
-          // ＋ button — opens Library to pick a new sutta
+          if (!hideTabChips)
+            Expanded(
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                itemCount: tabs.length,
+                itemBuilder: (context, index) {
+                  final tab = tabs[index];
+                  final isActive = tab.uid == currentUid;
+                  return _TabChip(
+                    tab: tab,
+                    isActive: isActive,
+                    onTap: () {
+                      if (!isActive) {
+                        ref.read(tabsProvider.notifier).setActive(tab.uid);
+                        context.pushReplacement(Routes.readerPath(tab.uid));
+                      }
+                    },
+                    onClose: () => _closeTab(context, ref, tab.uid),
+                  );
+                },
+              ),
+            )
+          else
+            const Spacer(),
+          // ＋ button — opens Library to pick a new sutta (always visible)
           SizedBox(
             width: 36,
             height: 36,

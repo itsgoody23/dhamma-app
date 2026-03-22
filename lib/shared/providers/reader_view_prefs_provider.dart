@@ -128,6 +128,40 @@ class ReaderMarginNotifier extends Notifier<String> {
   }
 }
 
+// ── Background color notifier ─────────────────────────────────────────────────
+
+final readerBgColorProvider =
+    NotifierProvider<ReaderBgColorNotifier, String>(
+  ReaderBgColorNotifier.new,
+);
+
+/// Stores a hex string like '#FAF3E0'. Empty string means use theme default.
+class ReaderBgColorNotifier extends Notifier<String> {
+  static const _key = 'reader_bg_color';
+  static const String auto = '';
+
+  @override
+  String build() {
+    _load();
+    return auto;
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getString(_key) ?? auto;
+  }
+
+  Future<void> set(String colorHex) async {
+    state = colorHex;
+    final prefs = await SharedPreferences.getInstance();
+    if (colorHex.isEmpty) {
+      await prefs.remove(_key);
+    } else {
+      await prefs.setString(_key, colorHex);
+    }
+  }
+}
+
 // ── Smart selection mode notifier ─────────────────────────────────────────────
 
 final readerSmartSelectionModeProvider =

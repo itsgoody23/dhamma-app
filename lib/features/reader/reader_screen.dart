@@ -180,6 +180,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   String _currentReadableText = '';
   bool _showCommunityHighlights = false;
   DateTime? _readingStartTime;
+  bool _isNavigating = false;
 
   @override
   void initState() {
@@ -779,6 +780,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   // ── Build ──────────────────────────────────────────────────────────────────
 
   void _navigateToSutta(String uid) {
+    if (_isNavigating || !mounted) return;
+    _isNavigating = true;
+    ref.read(tabsProvider.notifier).replaceTab(widget.uid, uid);
     context.pushReplacement(Routes.readerPath(uid));
   }
 
@@ -796,6 +800,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         ? null
         : Color(int.parse(
             'FF${textColorHex.replaceFirst('#', '')}',
+            radix: 16,
+          ));
+    final bgColorHex = ref.watch(readerBgColorProvider);
+    final bgColorValue = bgColorHex.isEmpty
+        ? null
+        : Color(int.parse(
+            'FF${bgColorHex.replaceFirst('#', '')}',
             radix: 16,
           ));
     final highlightsAsync =
@@ -957,7 +968,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             ),
         ],
       ),
-      body: Column(
+      body: ColoredBox(
+        color: bgColorValue ?? Theme.of(context).colorScheme.surface,
+        child: Column(
         children: [
           SuttaTabBar(currentUid: widget.uid),
           Expanded(child: suttaAsync.when(
@@ -1234,6 +1247,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         },
           )),
         ],
+        ),
       ),
     );
   }

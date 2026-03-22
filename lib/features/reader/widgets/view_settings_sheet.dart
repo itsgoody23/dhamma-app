@@ -21,6 +21,7 @@ class ViewSettingsSheet extends ConsumerWidget {
     final textColor = ref.watch(readerTextColorProvider);
     final margin = ref.watch(readerMarginProvider);
     final smartMode = ref.watch(readerSmartSelectionModeProvider);
+    final bgColor = ref.watch(readerBgColorProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return DraggableScrollableSheet(
@@ -188,6 +189,17 @@ class ViewSettingsSheet extends ConsumerWidget {
                           ref.read(readerTextColorProvider.notifier).set(hex),
                     ),
 
+                    // Background color
+                    const SizedBox(height: 16),
+                    const _SectionLabel('BACKGROUND'),
+                    const SizedBox(height: 10),
+                    _BgColorSwatches(
+                      selected: bgColor,
+                      isDark: isDark,
+                      onSelected: (hex) =>
+                          ref.read(readerBgColorProvider.notifier).set(hex),
+                    ),
+
                     // ── Smart Selection ───────────────────────────────────
                     const SizedBox(height: 16),
                     const _SectionLabel('SMART SELECTION'),
@@ -267,6 +279,91 @@ Widget _RowLabel(BuildContext context, String text) {
               Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65),
         ),
   );
+}
+
+// ── Background color swatches ─────────────────────────────────────────────────
+
+class _BgColorSwatches extends StatelessWidget {
+  const _BgColorSwatches({
+    required this.selected,
+    required this.isDark,
+    required this.onSelected,
+  });
+
+  final String selected;
+  final bool isDark;
+  final void Function(String hex) onSelected;
+
+  static const _lightBgs = <(String, String)>[
+    ('', 'Default'),
+    ('#FAF3E0', 'Warm Paper'),
+    ('#F4ECD8', 'Sepia'),
+    ('#F0F4F8', 'Cool White'),
+    ('#1C1C1E', 'Night'),
+  ];
+
+  static const _darkBgs = <(String, String)>[
+    ('', 'Default'),
+    ('#1C1C1E', 'True Black'),
+    ('#2C2C2E', 'Dark Gray'),
+    ('#1A1A2E', 'Midnight Blue'),
+    ('#FAF3E0', 'Warm Paper'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final bgList = isDark ? _darkBgs : _lightBgs;
+    return Wrap(
+      spacing: 12,
+      runSpacing: 10,
+      children: bgList.map((entry) {
+        final isSelected = selected == entry.$1;
+        final previewColor = entry.$1.isEmpty
+            ? Theme.of(context).colorScheme.surface
+            : Color(int.parse(
+                'FF${entry.$1.replaceFirst('#', '')}',
+                radix: 16,
+              ));
+
+        return Tooltip(
+          message: entry.$2,
+          child: GestureDetector(
+            onTap: () => onSelected(entry.$1),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: previewColor,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected
+                      ? AppColors.green
+                      : Colors.grey.withValues(alpha: 0.35),
+                  width: isSelected ? 3 : 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: isSelected
+                  ? Icon(
+                      Icons.check,
+                      color: previewColor.computeLuminance() > 0.5
+                          ? Colors.black87
+                          : Colors.white,
+                      size: 18,
+                    )
+                  : null,
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
 }
 
 // ── Color swatches ────────────────────────────────────────────────────────────

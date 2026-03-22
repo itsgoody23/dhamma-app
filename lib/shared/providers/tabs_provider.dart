@@ -154,4 +154,17 @@ class TabsNotifier extends Notifier<TabsState> {
     final prev = (idx - 1 + state.tabs.length) % state.tabs.length;
     setActive(state.tabs[prev].uid);
   }
+
+  /// Replaces [oldUid] tab with [newUid] in-place (used for Next/Prev sutta navigation
+  /// so sequential browsing doesn't accumulate new tabs).
+  void replaceTab(String oldUid, String newUid) {
+    final tabs = state.tabs.map((t) {
+      if (t.uid == oldUid) {
+        return SuttaTab(uid: newUid, abbrev: uidToAbbrev(newUid));
+      }
+      return t;
+    }).toList();
+    state = TabsState(tabs: tabs, activeUid: newUid);
+    _persist();
+  }
 }
