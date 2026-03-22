@@ -380,24 +380,22 @@ class _DownloadPage extends ConsumerWidget {
                   );
                 }
                 final effective = selectedPack ?? filtered.first;
-                return RadioGroup<ContentPack>(
-                  groupValue: effective,
-                  onChanged: (p) {
-                    if (p != null) onPackSelected(p);
+                return ListView.builder(
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    final pack = filtered[index];
+                    return RadioListTile<ContentPack>(
+                      value: pack,
+                      groupValue: effective,
+                      onChanged: (p) {
+                        if (p != null) onPackSelected(p);
+                      },
+                      title: Text(pack.packName),
+                      subtitle: Text(
+                          '${pack.compressedSizeMb.toStringAsFixed(1)} MB · ${pack.suttaCount} suttas'),
+                      activeColor: AppColors.green,
+                    );
                   },
-                  child: ListView.builder(
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final pack = filtered[index];
-                      return RadioListTile<ContentPack>(
-                        value: pack,
-                        title: Text(pack.packName),
-                        subtitle: Text(
-                            '${pack.compressedSizeMb.toStringAsFixed(1)} MB · ${pack.suttaCount} suttas'),
-                        activeColor: AppColors.green,
-                      );
-                    },
-                  ),
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
