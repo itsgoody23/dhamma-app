@@ -110,33 +110,31 @@ final _weeklyActivityProvider =
 const _pinnedKey = 'pinned_sutta_uids';
 
 final _pinnedSuttasProvider =
-    StateNotifierProvider<_PinnedNotifier, List<String>>(
-        (ref) => _PinnedNotifier());
+    NotifierProvider<_PinnedNotifier, List<String>>(_PinnedNotifier.new);
 
-class _PinnedNotifier extends StateNotifier<List<String>> {
-  _PinnedNotifier() : super([]) {
+class _PinnedNotifier extends Notifier<List<String>> {
+  @override
+  List<String> build() {
     _load();
+    return [];
   }
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getStringList(_pinnedKey) ?? [];
-    state = raw;
+    state = prefs.getStringList(_pinnedKey) ?? [];
   }
 
   Future<void> add(String uid) async {
     if (state.contains(uid)) return;
-    final next = [...state, uid];
-    state = next;
+    state = [...state, uid];
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_pinnedKey, next);
+    await prefs.setStringList(_pinnedKey, state);
   }
 
   Future<void> remove(String uid) async {
-    final next = state.where((u) => u != uid).toList();
-    state = next;
+    state = state.where((u) => u != uid).toList();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_pinnedKey, next);
+    await prefs.setStringList(_pinnedKey, state);
   }
 }
 

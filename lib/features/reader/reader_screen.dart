@@ -800,7 +800,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           ref.read(tabsProvider.notifier).updateTabTitle(widget.uid, next.value!.title);
         }
       },
-      fireImmediately: true,
     );
     final fontSize = ref.watch(readerFontSizeProvider);
     final lineSpacing = ref.watch(readerLineSpacingProvider);
