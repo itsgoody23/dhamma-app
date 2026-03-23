@@ -895,15 +895,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             tooltip: 'Search in sutta (Ctrl+F)',
             onPressed: _toggleSearch,
           ),
-          // Compare translations button
-          IconButton(
-            icon: Icon(
-              Icons.compare_arrows,
-              color: _showCompare ? AppColors.green : null,
-            ),
-            tooltip: 'Compare translations',
-            onPressed: () => setState(() => _showCompare = !_showCompare),
-          ),
           // View settings button
           IconButton(
             icon: const Icon(Icons.text_fields_outlined),
@@ -984,7 +975,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         color: bgColorValue ?? Theme.of(context).colorScheme.surface,
         child: Column(
         children: [
-          SuttaTabBar(currentUid: widget.uid),
           Expanded(child: suttaAsync.when(
         loading: () => const LoadingShimmer(),
         error: (e, _) => ErrorState(message: friendlyError(e)),
@@ -1258,6 +1248,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           );
         },
           )),
+          SuttaTabBar(currentUid: widget.uid),
         ],
         ),
       ),

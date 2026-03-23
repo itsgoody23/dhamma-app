@@ -28,7 +28,10 @@ final communityPackagesProvider = FutureProvider.autoDispose
   return ref.watch(packagePublishServiceProvider).browsePackages(
         language: params.language,
         orderBy: params.orderBy,
-      );
+      ).timeout(
+    const Duration(seconds: 10),
+    onTimeout: () => [],
+  );
 });
 
 final myPackagesProvider =

@@ -80,23 +80,48 @@ class ViewSettingsSheet extends ConsumerWidget {
 
                     // Font family
                     _RowLabel(context, 'Font'),
-                    const SizedBox(height: 6),
-                    SegmentedButton<String>(
-                      selected: {fontFamily},
-                      onSelectionChanged: (v) => ref
-                          .read(readerFontFamilyProvider.notifier)
-                          .set(v.first),
-                      style: SegmentedButton.styleFrom(
-                        selectedBackgroundColor:
-                            AppColors.green.withValues(alpha: 0.15),
-                        selectedForegroundColor: AppColors.green,
-                      ),
-                      segments: ReaderFontFamily.options
-                          .map((o) => ButtonSegment<String>(
-                                value: o.$1,
-                                label: Text(o.$2),
-                              ))
-                          .toList(),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: ReaderFontFamily.options.map((o) {
+                        final isSelected = fontFamily == o.$1;
+                        return GestureDetector(
+                          onTap: () => ref
+                              .read(readerFontFamilyProvider.notifier)
+                              .set(o.$1),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.green.withValues(alpha: 0.12)
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppColors.green
+                                    : Colors.transparent,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(
+                              o.$2,
+                              style: TextStyle(
+                                fontFamily: o.$1,
+                                fontSize: 14,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                                color: isSelected ? AppColors.green : null,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
                     const SizedBox(height: 16),
 
@@ -364,15 +389,34 @@ class _BgColorSwatches extends StatelessWidget {
                 radix: 16,
               ));
 
+        // Compute a slightly lighter/darker shade for the ombre gradient
+        final ombreColor = entry.$1.isEmpty
+            ? previewColor.withValues(
+                alpha: 0.5,
+                red: (previewColor.r + 0.2).clamp(0.0, 1.0),
+                green: (previewColor.g + 0.2).clamp(0.0, 1.0),
+                blue: (previewColor.b + 0.2).clamp(0.0, 1.0),
+              )
+            : HSLColor.fromColor(previewColor)
+                .withLightness(
+                  (HSLColor.fromColor(previewColor).lightness + 0.18)
+                      .clamp(0.0, 1.0),
+                )
+                .toColor();
+
         return Tooltip(
           message: entry.$2,
           child: GestureDetector(
             onTap: () => onSelected(entry.$1),
             child: Container(
-              width: 36,
-              height: 36,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: previewColor,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [ombreColor, previewColor],
+                ),
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isSelected
@@ -382,9 +426,9 @@ class _BgColorSwatches extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    blurRadius: 3,
-                    offset: const Offset(0, 1),
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
@@ -449,30 +493,48 @@ class _ColorSwatches extends StatelessWidget {
                 radix: 16,
               ));
 
+        final ombreColor = HSLColor.fromColor(bgColor)
+            .withLightness(
+              (HSLColor.fromColor(bgColor).lightness + 0.2).clamp(0.0, 1.0),
+            )
+            .toColor();
+
         return Tooltip(
           message: entry.$2,
           child: GestureDetector(
             onTap: () => onSelected(entry.$1),
             child: Container(
-              width: 36,
-              height: 36,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: bgColor,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [ombreColor, bgColor],
+                ),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? AppColors.green : Colors.transparent,
-                  width: 3,
+                  color: isSelected
+                      ? AppColors.green
+                      : Colors.grey.withValues(alpha: 0.3),
+                  width: isSelected ? 3 : 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    blurRadius: 3,
-                    offset: const Offset(0, 1),
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
               child: isSelected
-                  ? const Icon(Icons.check, color: Colors.white, size: 18)
+                  ? Icon(
+                      Icons.check,
+                      color: bgColor.computeLuminance() > 0.5
+                          ? Colors.black87
+                          : Colors.white,
+                      size: 18,
+                    )
                   : null,
             ),
           ),

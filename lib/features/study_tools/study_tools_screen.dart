@@ -35,7 +35,7 @@ class _StudyToolsScreenState extends ConsumerState<StudyToolsScreen>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 8, vsync: this);
+    _tabs = TabController(length: 9, vsync: this);
   }
 
   @override
@@ -57,6 +57,7 @@ class _StudyToolsScreenState extends ConsumerState<StudyToolsScreen>
             Tab(text: 'Bookmarks'),
             Tab(text: 'Highlights'),
             Tab(text: 'Notes'),
+            Tab(text: 'Tutorial'),
             Tab(text: 'Collections'),
             Tab(text: 'Translations'),
             Tab(text: 'Dictionary'),
@@ -71,6 +72,7 @@ class _StudyToolsScreenState extends ConsumerState<StudyToolsScreen>
           _BookmarksTab(),
           _HighlightsTab(),
           _NotesTab(),
+          _TutorialTab(),
           _CollectionsTab(),
           _TranslationsTab(),
           _DictionaryTab(),
@@ -786,6 +788,46 @@ class _DictionaryTab extends StatelessWidget {
               onPressed: () => context.push(Routes.dictionary),
               icon: const Icon(Icons.search, size: 16),
               label: const Text('Open Dictionary'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Community ─────────────────────────────────────────────────────────────
+
+// ── Tutorial ──────────────────────────────────────────────────────────────
+
+class _TutorialTab extends StatelessWidget {
+  const _TutorialTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.school_outlined, size: 48, color: AppColors.green),
+            const SizedBox(height: 16),
+            const Text(
+              'Reader Tutorial',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Learn how to highlight, annotate,\nand navigate the Pali Canon.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.tonalIcon(
+              onPressed: () => context.push(Routes.help),
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: const Text('Open Tutorial'),
             ),
           ],
         ),

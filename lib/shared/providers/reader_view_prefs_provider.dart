@@ -7,10 +7,16 @@ abstract final class ReaderFontFamily {
   static const String serif = 'NotoSerif';
   static const String palatino = 'Palatino';
   static const String sans = 'NotoSans';
+  static const String georgia = 'Georgia';
+  static const String baskerville = 'Baskerville';
+  static const String times = 'TimesNewRomanPSMT';
 
   static const List<(String id, String label)> options = [
     (serif, 'Serif'),
     (palatino, 'Palatino'),
+    (georgia, 'Georgia'),
+    (baskerville, 'Baskerville'),
+    (times, 'Times'),
     (sans, 'Sans'),
   ];
 }
