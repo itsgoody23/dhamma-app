@@ -10,6 +10,7 @@ import '../../core/routing/routes.dart';
 import '../../shared/providers/auth_provider.dart';
 import '../../shared/providers/notification_provider.dart';
 import '../../shared/providers/preferences_provider.dart';
+import '../reader/widgets/view_settings_sheet.dart';
 
 // Note: add url_launcher: ^6.3.0 to pubspec.yaml
 
@@ -50,6 +51,16 @@ class SettingsScreen extends ConsumerWidget {
             );
           }),
           ListTile(
+            title: const Text('View Settings'),
+            subtitle: const Text('Font, size, spacing, margins, text color'),
+            leading: const Icon(Icons.text_fields_outlined),
+            onTap: () => showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              builder: (_) => const ViewSettingsSheet(),
+            ),
+          ),
+          ListTile(
             title: Text(context.l10n.settingsDefaultLanguage),
             subtitle: Text(language.toUpperCase()),
             leading: const Icon(Icons.language_outlined),
@@ -85,18 +96,6 @@ class SettingsScreen extends ConsumerWidget {
             );
           }),
 
-          Consumer(builder: (context, ref, _) {
-            final audioMobile = ref.watch(audioMobileDataProvider);
-            return SwitchListTile(
-              title: Text(context.l10n.settingsAudioMobileData),
-              subtitle: Text(context.l10n.settingsAudioMobileDataSubtitle),
-              secondary: const Icon(Icons.headphones_outlined),
-              value: audioMobile,
-              activeTrackColor: AppColors.green,
-              onChanged: (v) =>
-                  ref.read(audioMobileDataProvider.notifier).set(v),
-            );
-          }),
 
           const Divider(),
 
@@ -177,6 +176,17 @@ class SettingsScreen extends ConsumerWidget {
           const Divider(),
 
           // ── About ─────────────────────────────────────────────────────────
+          const _SectionHeader(title: 'Help'),
+          ListTile(
+            title: const Text('Help & Tutorial'),
+            subtitle:
+                const Text('Keyboard shortcuts, reader guide, features'),
+            leading: const Icon(Icons.help_outline),
+            onTap: () => context.push(Routes.help),
+          ),
+
+          const Divider(),
+
           _SectionHeader(title: context.l10n.settingsAbout),
           ListTile(
             title: Text(context.l10n.settingsLicences),
@@ -240,28 +250,26 @@ class SettingsScreen extends ConsumerWidget {
       builder: (ctx) => SimpleDialog(
         title: Text(context.l10n.settingsLineSpacing),
         children: [
-          RadioGroup<double>(
-            groupValue: ref.read(readerLineSpacingProvider),
-            onChanged: (v) {
-              if (v != null) {
-                ref
-                    .read(readerLineSpacingProvider.notifier)
-                    .setLineSpacing(v);
-              }
-              Navigator.pop(ctx);
-            },
-            child: Column(
-              children: ReaderLineSpacingNotifier.options
-                  .asMap()
-                  .entries
-                  .map((e) => RadioListTile<double>(
-                        title: Text(ReaderLineSpacingNotifier.labels[e.key]),
-                        subtitle: Text('${e.value}x'),
-                        value: e.value,
-                        activeColor: AppColors.green,
-                      ))
-                  .toList(),
-            ),
+          Column(
+            children: ReaderLineSpacingNotifier.options
+                .asMap()
+                .entries
+                .map((e) => RadioListTile<double>(
+                      title: Text(ReaderLineSpacingNotifier.labels[e.key]),
+                      subtitle: Text('${e.value}x'),
+                      value: e.value,
+                      groupValue: ref.read(readerLineSpacingProvider),
+                      onChanged: (v) {
+                        if (v != null) {
+                          ref
+                              .read(readerLineSpacingProvider.notifier)
+                              .setLineSpacing(v);
+                        }
+                        Navigator.pop(ctx);
+                      },
+                      activeColor: AppColors.green,
+                    ))
+                .toList(),
           ),
         ],
       ),
@@ -274,23 +282,21 @@ class SettingsScreen extends ConsumerWidget {
       builder: (ctx) => SimpleDialog(
         title: Text(context.l10n.settingsTheme),
         children: [
-          RadioGroup<ThemeMode>(
-            groupValue: ref.read(themeModeProvider),
-            onChanged: (v) {
-              if (v != null) {
-                ref.read(themeModeProvider.notifier).setThemeMode(v);
-              }
-              Navigator.pop(ctx);
-            },
-            child: Column(
-              children: ThemeMode.values
-                  .map((mode) => RadioListTile<ThemeMode>(
-                        title: Text(_themeName(context, mode)),
-                        value: mode,
-                        activeColor: AppColors.green,
-                      ))
-                  .toList(),
-            ),
+          Column(
+            children: ThemeMode.values
+                .map((mode) => RadioListTile<ThemeMode>(
+                      title: Text(_themeName(context, mode)),
+                      value: mode,
+                      groupValue: ref.read(themeModeProvider),
+                      onChanged: (v) {
+                        if (v != null) {
+                          ref.read(themeModeProvider.notifier).setThemeMode(v);
+                        }
+                        Navigator.pop(ctx);
+                      },
+                      activeColor: AppColors.green,
+                    ))
+                .toList(),
           ),
         ],
       ),
@@ -303,25 +309,25 @@ class SettingsScreen extends ConsumerWidget {
       builder: (ctx) => SimpleDialog(
         title: Text(context.l10n.settingsFontSize),
         children: [
-          RadioGroup<double>(
-            groupValue: ref.read(readerFontSizeProvider),
-            onChanged: (v) {
-              if (v != null) {
-                ref.read(readerFontSizeProvider.notifier).setFontSize(v);
-              }
-              Navigator.pop(ctx);
-            },
-            child: Column(
-              children: AppTypography.readerFontSizes
-                  .asMap()
-                  .entries
-                  .map((e) => RadioListTile<double>(
-                        title: Text(AppTypography.readerFontSizeLabels[e.key]),
-                        value: e.value,
-                        activeColor: AppColors.green,
-                      ))
-                  .toList(),
-            ),
+          Column(
+            children: AppTypography.readerFontSizes
+                .asMap()
+                .entries
+                .map((e) => RadioListTile<double>(
+                      title: Text(AppTypography.readerFontSizeLabels[e.key]),
+                      value: e.value,
+                      groupValue: ref.read(readerFontSizeProvider),
+                      onChanged: (v) {
+                        if (v != null) {
+                          ref
+                              .read(readerFontSizeProvider.notifier)
+                              .setFontSize(v);
+                        }
+                        Navigator.pop(ctx);
+                      },
+                      activeColor: AppColors.green,
+                    ))
+                .toList(),
           ),
         ],
       ),
@@ -351,21 +357,19 @@ class SettingsScreen extends ConsumerWidget {
       builder: (ctx) => SimpleDialog(
         title: Text(context.l10n.settingsAppLanguage),
         children: [
-          RadioGroup<Locale?>(
-            groupValue: ref.read(appLocaleProvider),
-            onChanged: (v) {
-              ref.read(appLocaleProvider.notifier).setLocale(v);
-              Navigator.pop(ctx);
-            },
-            child: Column(
-              children: locales
-                  .map((entry) => RadioListTile<Locale?>(
-                        title: Text(entry.$2),
-                        value: entry.$1,
-                        activeColor: AppColors.green,
-                      ))
-                  .toList(),
-            ),
+          Column(
+            children: locales
+                .map((entry) => RadioListTile<Locale?>(
+                      title: Text(entry.$2),
+                      value: entry.$1,
+                      groupValue: ref.read(appLocaleProvider),
+                      onChanged: (v) {
+                        ref.read(appLocaleProvider.notifier).setLocale(v);
+                        Navigator.pop(ctx);
+                      },
+                      activeColor: AppColors.green,
+                    ))
+                .toList(),
           ),
         ],
       ),
@@ -384,23 +388,23 @@ class SettingsScreen extends ConsumerWidget {
       builder: (ctx) => SimpleDialog(
         title: Text(context.l10n.settingsDefaultLanguage),
         children: [
-          RadioGroup<String>(
-            groupValue: ref.read(readerLanguageProvider),
-            onChanged: (v) {
-              if (v != null) {
-                ref.read(readerLanguageProvider.notifier).setLanguage(v);
-              }
-              Navigator.pop(ctx);
-            },
-            child: Column(
-              children: languages
-                  .map((lang) => RadioListTile<String>(
-                        title: Text(lang.$2),
-                        value: lang.$1,
-                        activeColor: AppColors.green,
-                      ))
-                  .toList(),
-            ),
+          Column(
+            children: languages
+                .map((lang) => RadioListTile<String>(
+                      title: Text(lang.$2),
+                      value: lang.$1,
+                      groupValue: ref.read(readerLanguageProvider),
+                      onChanged: (v) {
+                        if (v != null) {
+                          ref
+                              .read(readerLanguageProvider.notifier)
+                              .setLanguage(v);
+                        }
+                        Navigator.pop(ctx);
+                      },
+                      activeColor: AppColors.green,
+                    ))
+                .toList(),
           ),
         ],
       ),

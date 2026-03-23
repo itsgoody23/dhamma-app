@@ -96,11 +96,26 @@ class _BrowsePackagesScreenState extends ConsumerState<BrowsePackagesScreen> {
               data: (packages) {
                 if (packages.isEmpty) {
                   return Center(
-                    child: Text(
-                      context.l10n.communityNoPackages,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface
-                            .withValues(alpha: 0.5),
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.explore_outlined,
+                              size: 48, color: Colors.grey),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'No packages yet',
+                            style: TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            context.l10n.communityNoPackages,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey.shade600),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -112,9 +127,37 @@ class _BrowsePackagesScreenState extends ConsumerState<BrowsePackagesScreen> {
                       _PackageCard(package: packages[index]),
                 );
               },
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.cloud_off, size: 48, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Could not reach community',
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Check your connection and try again.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey.shade600),
+                      ),
+                      const SizedBox(height: 20),
+                      FilledButton.tonalIcon(
+                        onPressed: () =>
+                            ref.invalidate(communityPackagesProvider(_params)),
+                        icon: const Icon(Icons.refresh, size: 16),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ],

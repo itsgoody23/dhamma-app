@@ -7,6 +7,7 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/extensions/l10n_extension.dart';
 import '../../core/routing/routes.dart';
 import '../../data/database/app_database.dart';
+import '../../data/database/daos/progress_dao.dart';
 import '../../shared/providers/database_provider.dart';
 import '../collections/collections_screen.dart';
 
@@ -34,7 +35,7 @@ class _StudyToolsScreenState extends ConsumerState<StudyToolsScreen>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 7, vsync: this);
+    _tabs = TabController(length: 9, vsync: this);
   }
 
   @override
@@ -51,28 +52,168 @@ class _StudyToolsScreenState extends ConsumerState<StudyToolsScreen>
         bottom: TabBar(
           controller: _tabs,
           isScrollable: true,
-          tabs: [
-            Tab(text: context.l10n.studyBookmarks),
-            Tab(text: context.l10n.studyHighlights),
-            Tab(text: context.l10n.studyNotes),
-            Tab(text: context.l10n.studyCollections),
-            Tab(text: context.l10n.studyTranslations),
-            Tab(text: context.l10n.studyDictionary),
-            Tab(text: context.l10n.studyCommunity),
+          tabs: const [
+            Tab(text: 'History'),
+            Tab(text: 'Bookmarks'),
+            Tab(text: 'Highlights'),
+            Tab(text: 'Notes'),
+            Tab(text: 'Tutorial'),
+            Tab(text: 'Collections'),
+            Tab(text: 'Translations'),
+            Tab(text: 'Dictionary'),
+            Tab(text: 'Community'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabs,
         children: const [
+          _HistoryTab(),
           _BookmarksTab(),
           _HighlightsTab(),
           _NotesTab(),
+          _TutorialTab(),
           _CollectionsTab(),
           _TranslationsTab(),
           _DictionaryTab(),
           _CommunityTab(),
         ],
+      ),
+    );
+  }
+}
+
+// ── History ───────────────────────────────────────────────────────────────────
+
+final _studyHistoryProvider =
+    FutureProvider.autoDispose<List<HistoryItem>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.progressDao.getAllHistory();
+});
+
+class _HistoryTab extends ConsumerWidget {
+  const _HistoryTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final historyAsync = ref.watch(_studyHistoryProvider);
+
+    return historyAsync.when(
+      data: (items) {
+        if (items.isEmpty) {
+          return const _EmptyTab(
+            icon: Icons.history_outlined,
+            message: 'No reading history yet.\nOpen a sutta to get started.',
+          );
+        }
+        // Group items by date bucket.
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final yesterday = today.subtract(const Duration(days: 1));
+        final weekAgo = today.subtract(const Duration(days: 7));
+
+        String _bucket(DateTime dt) {
+          final d = DateTime(dt.year, dt.month, dt.day);
+          if (!d.isBefore(today)) return 'Today';
+          if (!d.isBefore(yesterday)) return 'Yesterday';
+          if (!d.isBefore(weekAgo)) return 'Last 7 days';
+          return 'Older';
+        }
+
+        final groups = <String, List<HistoryItem>>{};
+        for (final item in items) {
+          final bucket = _bucket(item.lastReadAt);
+          groups.putIfAbsent(bucket, () => []).add(item);
+        }
+
+        const bucketOrder = ['Today', 'Yesterday', 'Last 7 days', 'Older'];
+        final widgets = <Widget>[];
+        for (final bucket in bucketOrder) {
+          final group = groups[bucket];
+          if (group == null || group.isEmpty) continue;
+          widgets.add(Padding(
+            padding: const EdgeInsets.fromLTRB(
+                AppSizes.md, AppSizes.md, AppSizes.md, AppSizes.xs),
+            child: Text(
+              bucket.toUpperCase(),
+              style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8),
+            ),
+          ));
+          for (final item in group) {
+            widgets.add(_HistoryTile(item: item));
+          }
+        }
+
+        return ListView(
+          padding: const EdgeInsets.only(bottom: AppSizes.lg),
+          children: widgets,
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+    );
+  }
+}
+
+class _HistoryTile extends StatelessWidget {
+  const _HistoryTile({required this.item});
+
+  final HistoryItem item;
+
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays == 1) return 'Yesterday';
+    return '${diff.inDays}d ago';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = AppColors.nikayaColor(item.nikaya);
+    return Card(
+      margin:
+          const EdgeInsets.symmetric(horizontal: AppSizes.md, vertical: 2),
+      child: ListTile(
+        leading: Container(
+          width: 4,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        title: Text(item.title,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+            overflow: TextOverflow.ellipsis),
+        subtitle: Row(
+          children: [
+            Text(
+              item.nikaya.toUpperCase(),
+              style: TextStyle(
+                  fontSize: 11,
+                  color: color,
+                  fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(width: 8),
+            if (item.completed)
+              const Text('✓ Complete',
+                  style: TextStyle(fontSize: 11, color: Colors.grey))
+            else
+              const Text('In progress',
+                  style: TextStyle(fontSize: 11, color: Colors.grey)),
+          ],
+        ),
+        trailing: Text(
+          _timeAgo(item.lastReadAt),
+          style: const TextStyle(fontSize: 11, color: Colors.grey),
+        ),
+        onTap: () => context.push(
+          Routes.readerPath(item.textUid, scrollTo: item.lastPosition > 0 ? item.lastPosition : null),
+        ),
       ),
     );
   }
@@ -647,6 +788,46 @@ class _DictionaryTab extends StatelessWidget {
               onPressed: () => context.push(Routes.dictionary),
               icon: const Icon(Icons.search, size: 16),
               label: const Text('Open Dictionary'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Community ─────────────────────────────────────────────────────────────
+
+// ── Tutorial ──────────────────────────────────────────────────────────────
+
+class _TutorialTab extends StatelessWidget {
+  const _TutorialTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.school_outlined, size: 48, color: AppColors.green),
+            const SizedBox(height: 16),
+            const Text(
+              'Reader Tutorial',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Learn how to highlight, annotate,\nand navigate the Pali Canon.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.tonalIcon(
+              onPressed: () => context.push(Routes.help),
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: const Text('Open Tutorial'),
             ),
           ],
         ),

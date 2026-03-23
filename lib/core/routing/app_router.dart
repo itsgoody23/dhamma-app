@@ -15,16 +15,13 @@ import '../../features/auth/login_screen.dart';
 import '../../features/auth/profile_screen.dart';
 import '../../features/collections/collections_screen.dart';
 import '../../features/collections/collection_detail_screen.dart';
-import '../../features/audio/audio_browse_screen.dart';
-import '../../features/audio/chanting_screen.dart';
-import '../../features/audio/meditation_screen.dart';
-import '../../features/audio/dhamma_talks_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/translations/my_translations_screen.dart';
 import '../../features/dictionary/dictionary_screen.dart';
 import '../../features/community/browse_packages_screen.dart';
 import '../../features/community/package_detail_screen.dart';
 import '../../features/community/study_groups_screen.dart';
+import '../../features/help/help_screen.dart';
 import '../../shared/widgets/main_shell.dart';
 import 'routes.dart';
 
@@ -95,12 +92,6 @@ GoRouter appRouter(Ref ref) {
           ]),
           StatefulShellBranch(routes: [
             GoRoute(
-              path: Routes.audio,
-              builder: (context, state) => const AudioBrowseScreen(),
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
               path: Routes.study,
               builder: (context, state) => const StudyToolsScreen(),
             ),
@@ -122,18 +113,6 @@ GoRouter appRouter(Ref ref) {
           scrollTo: int.tryParse(
               state.uri.queryParameters['scrollTo'] ?? ''),
         ),
-      ),
-      GoRoute(
-        path: Routes.chanting,
-        builder: (context, state) => const ChantingScreen(),
-      ),
-      GoRoute(
-        path: Routes.meditation,
-        builder: (context, state) => const MeditationScreen(),
-      ),
-      GoRoute(
-        path: Routes.dhammaTalks,
-        builder: (context, state) => const DhammaTalksScreen(),
       ),
       GoRoute(
         path: Routes.collections,
@@ -178,6 +157,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.profile,
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: Routes.help,
+        builder: (context, state) => const HelpScreen(),
       ),
     ],
   );
